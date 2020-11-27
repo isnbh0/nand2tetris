@@ -1,0 +1,19 @@
+// Helper for Mux4Way16.hdl
+
+/**
+ * 4-way multiplexor:
+ * out = a if sel == 00
+ *       b if sel == 01
+ *       c if sel == 10
+ *       d if sel == 11
+ */
+
+ CHIP Mux4Way {
+     IN a, b, c, d, sel[2];
+     OUT out;
+
+     PARTS:
+     Mux (a=a, b=b, sel=sel[0], out=mab);
+     Mux (a=c, b=d, sel=sel[0], out=mcd);
+     Mux (a=mab, b=mcd, sel=sel[1], out=out);
+ }
