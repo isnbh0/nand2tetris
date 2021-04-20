@@ -38,7 +38,7 @@ D;JGT
 @isblack
 D=M
 @BLACKEN
-D;JMP
+D;JEQ
 @FINALLY
 0;JMP
 
@@ -46,7 +46,7 @@ D;JMP
 @isblack
 D=M-1
 @WHITEN
-D;JMP
+D;JEQ
 @FINALLY
 0;JMP
 
