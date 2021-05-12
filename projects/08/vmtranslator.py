@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 from enum import Enum
 
@@ -84,9 +85,16 @@ class CodeWriter:
     def __init__(self):
         self.output = []
         self.compare_counter = 0
+        self.function_call_counter = 0
 
     def setFileName(self, file_name: str):
         self.file_name = file_name
+
+    def setFunctionName(self, function_name: str):
+        self.function_name = function_name
+
+    def unsetFunctionName(self):
+        self.function_name = None
 
     def writeArithmetic(self, command: str):
         if command in ("add", "sub", "and", "or"):
@@ -126,22 +134,27 @@ class CodeWriter:
         pass
 
     def writeLabel(self, label: str):
-        self.output += h.assign_label(label)
+        self.output += h.assign_label(label, self.function_name)
 
     def writeGoto(self, label: str):
-        self.output += h.goto_label(label)
+        self.output += h.goto_label(label, self.function_name)
 
     def writeIf(self, label: str):
-        self.output += h.if_goto_label(label)
+        self.output += h.if_goto_label(label, self.function_name)
 
     def writeCall(self, function_name: str, num_args: int):
-        pass
+        self.output += h.call_function(
+            function_name, num_args, self.function_call_counter
+        )
+        self.function_call_counter += 1
 
     def writeReturn(self):
-        pass
+        self.output += h.return_from_function()
+        self.unsetFunctionName()
 
     def writeFunction(self, function_name: str, num_locals: int):
-        pass
+        self.setFunctionName(function_name)
+        self.output += h.declare_function(function_name, num_locals)
 
     def writeLine(self, *args):
         self.output += [f"// {' '.join(args)}"]
@@ -168,7 +181,7 @@ class CodeWriter:
             raise ValueError("Command in line not recognized")
 
     def _finish(self):
-        self.output += ["(END)", "@END", "0;JMP"]
+        self.output += h.finish()
 
     def to_disk(self, file_path: str):
         self._finish()
@@ -177,7 +190,7 @@ class CodeWriter:
             f.write("\n")
 
 
-def main(file_path):
+def translate_single_file(file_path):
     file_name = re.findall(r"\w+", file_path)[-2]
 
     p = Parser(file_path)
@@ -192,8 +205,31 @@ def main(file_path):
             p.advance()
         else:
             break
-
     cw.to_disk(file_path=file_path.replace(".vm", ".asm"))
+
+
+def translate_directory(path):
+    directory_name = re.findall(r"\w+", path)[-1]
+    file_paths = [
+        os.path.join(path, file) for file in os.listdir(path) if file.endswith(".vm")
+    ]
+
+    ps = [Parser(file_path) for file_path in file_paths]
+    file_names = [re.findall(r"\w+", file_path)[-2] for file_path in file_paths]
+
+    cw = CodeWriter()
+    for p, file_name in zip(ps, file_names):
+        cw.setFileName(file_name=file_name)
+
+        # cw.writeInit()
+        while True:
+            cmd = p.cmd.split()
+            cw.writeLine(*cmd)
+            if p.hasMoreCommands:
+                p.advance()
+            else:
+                break
+    cw.to_disk(file_path=(os.path.join(path, directory_name + ".asm")))
 
 
 if __name__ == "__main__":
@@ -204,4 +240,7 @@ if __name__ == "__main__":
 
     path = parser.parse_args().path
 
-    main(file_path=path)
+    if os.path.isdir(path):
+        translate_directory(path=path)
+    else:
+        translate_single_file(file_path=path)
