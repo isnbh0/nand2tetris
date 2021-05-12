@@ -207,7 +207,7 @@ def pop_temp(index: int):
     return res
 
 
-def _flabel(label: str, function_name: t.Optional[str]):
+def _flabel(label: str, function_name: t.Optional[str]) -> str:
     return f"{label}" if function_name is None else f"{function_name}${label}"
 
 
@@ -330,6 +330,22 @@ def return_from_function():
     # goto *RET
     res += [f"@{RET}"]
     deref_m_ptr(res, op="0;JMP")
+    return res
+
+
+def initialize():
+    INIT_CALL = -1
+    res = ["// Bootstrap code", "// SP = 256", "// call Sys.init"]
+
+    # SP = 256
+    res += ["@256", "D=A"]
+    res += [f"@SP", "M=D"]
+
+    # call Sys.init
+    res += call_function(
+        function_name="Sys.init", num_args=0, function_call_counter=INIT_CALL
+    )
+
     return res
 
 

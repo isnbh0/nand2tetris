@@ -86,6 +86,7 @@ class CodeWriter:
         self.output = []
         self.compare_counter = 0
         self.function_call_counter = 0
+        self.function_name = None
 
     def setFileName(self, file_name: str):
         self.file_name = file_name
@@ -131,7 +132,7 @@ class CodeWriter:
             raise e
 
     def writeInit(self):
-        pass
+        self.output += h.initialize()
 
     def writeLabel(self, label: str):
         self.output += h.assign_label(label, self.function_name)
@@ -150,7 +151,7 @@ class CodeWriter:
 
     def writeReturn(self):
         self.output += h.return_from_function()
-        self.unsetFunctionName()
+        # self.unsetFunctionName()
 
     def writeFunction(self, function_name: str, num_locals: int):
         self.setFunctionName(function_name)
@@ -190,14 +191,15 @@ class CodeWriter:
             f.write("\n")
 
 
-def translate_single_file(file_path):
+def translate_single_file(file_path, skip_bootstrap=False):
     file_name = re.findall(r"\w+", file_path)[-2]
 
     p = Parser(file_path)
     cw = CodeWriter()
     cw.setFileName(file_name=file_name)
 
-    # cw.writeInit()
+    if not skip_bootstrap:
+        cw.writeInit()
     while True:
         cmd = p.cmd.split()
         cw.writeLine(*cmd)
@@ -208,7 +210,7 @@ def translate_single_file(file_path):
     cw.to_disk(file_path=file_path.replace(".vm", ".asm"))
 
 
-def translate_directory(path):
+def translate_directory(path, skip_bootstrap=False):
     directory_name = re.findall(r"\w+", path)[-1]
     file_paths = [
         os.path.join(path, file) for file in os.listdir(path) if file.endswith(".vm")
@@ -218,10 +220,11 @@ def translate_directory(path):
     file_names = [re.findall(r"\w+", file_path)[-2] for file_path in file_paths]
 
     cw = CodeWriter()
+    if not skip_bootstrap:
+        cw.writeInit()
     for p, file_name in zip(ps, file_names):
         cw.setFileName(file_name=file_name)
 
-        # cw.writeInit()
         while True:
             cmd = p.cmd.split()
             cw.writeLine(*cmd)
@@ -237,10 +240,14 @@ if __name__ == "__main__":
 
     # Required positional argument
     parser.add_argument("path", help="path to asm file")
+    parser.add_argument("-s", "--skip-bootstrap", action="store_true", default=False)
 
-    path = parser.parse_args().path
+    args = parser.parse_args()
+
+    path = args.path
+    skip_bootstrap = args.skip_bootstrap
 
     if os.path.isdir(path):
-        translate_directory(path=path)
+        translate_directory(path=path, skip_bootstrap=skip_bootstrap)
     else:
-        translate_single_file(file_path=path)
+        translate_single_file(file_path=path, skip_bootstrap=skip_bootstrap)
