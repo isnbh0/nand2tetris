@@ -201,3 +201,20 @@ def pop_temp(index: int):
     res += ["@addr"]
     deref_ptr(res, op="M=D")
     return res
+
+
+def assign_label(label: str):
+    res = [f"({label})"]
+    return res
+
+
+def goto_label(label: str):
+    res = [f"@{label}", "0;JMP"]
+    return res
+
+
+def if_goto_label(label: str):
+    res = []
+    _pop_to_d(res)
+    res += [f"@{label}", "D;JNE"]
+    return res

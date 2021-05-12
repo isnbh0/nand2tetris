@@ -122,13 +122,50 @@ class CodeWriter:
         except Exception as e:
             raise e
 
+    def writeInit(self):
+        pass
+
+    def writeLabel(self, label: str):
+        self.output += h.assign_label(label)
+
+    def writeGoto(self, label: str):
+        self.output += h.goto_label(label)
+
+    def writeIf(self, label: str):
+        self.output += h.if_goto_label(label)
+
+    def writeCall(self, function_name: str, num_args: int):
+        pass
+
+    def writeReturn(self):
+        pass
+
+    def writeFunction(self, function_name: str, num_locals: int):
+        pass
+
     def writeLine(self, *args):
         self.output += [f"// {' '.join(args)}"]
-        if len(args) == 1:
+        if args[0] in ("add", "sub", "and", "or", "eq", "gt", "lt", "neg", "not"):
             self.writeArithmetic(*args)
-        elif len(args) == 3:
+        elif args[0] == "label":
+            self.writeLabel(*args[1:])
+        elif args[0] == "goto":
+            self.writeGoto(*args[1:])
+        elif args[0] == "if-goto":
+            self.writeIf(*args[1:])
+        elif args[0] == "call":
+            function_name, num_args = args[1:]
+            self.writeCall(function_name, int(num_args))
+        elif args[0] == "return":
+            self.writeReturn()
+        elif args[0] == "function":
+            function_name, num_locals = args[1:]
+            self.writeFunction(function_name, int(num_locals))
+        elif args[0] in ("push", "pop"):
             command, segment, index = args
             self.writePushPop(command, segment, int(index))
+        else:
+            raise ValueError("Command in line not recognized")
 
     def _finish(self):
         self.output += ["(END)", "@END", "0;JMP"]
@@ -147,6 +184,7 @@ def main(file_path):
     cw = CodeWriter()
     cw.setFileName(file_name=file_name)
 
+    # cw.writeInit()
     while True:
         cmd = p.cmd.split()
         cw.writeLine(*cmd)
