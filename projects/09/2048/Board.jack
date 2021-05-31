@@ -1,0 +1,114 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/09/Board/Board.jack
+
+/** Implements a graphical board. */
+class Board {
+
+   field int nrows, ncols;
+   field Array grid;
+
+   /** Constructs a new board with a given number of rows and columns. */
+   constructor Board new(int Arows, int Acols) {
+      var int i, j;
+      var Array row;
+
+      let nrows = Arows;
+      let ncols = Acols;
+      let grid = Array.new(nrows);
+
+      let i = 0;
+      while (i < nrows) {
+         let row = Array.new(ncols);
+         let j = 0;
+         while (j < ncols) {
+            let grid[i] = row;
+            let row[j] = Block.new();
+            let j = j + 1;
+         }
+         let i = i + 1;
+      }
+      return this;
+   }
+
+   /** Initialize board. */
+   method void initialize() {
+      return;
+   }
+
+   /** Alter board by moving. */
+   method void alter() {
+      return;
+   }
+
+   /** Disposes this board. */
+   method void dispose() {
+      do Memory.deAlloc(this);
+      return;
+   }
+
+   /** Print a blank space c times.
+       Helper for Board.print() below. */
+   function void printOffset(int c) {
+      var int ci;
+
+      let ci = 0;
+      while (ci < c) {
+         do Output.printString(" ");
+         let ci = ci + 1;
+      }
+      
+      return;
+   }
+
+   /** Draws the board on the screen. */
+   method void print(int r, int c) {
+      var int i, j, p, CHAR_WIDTH;
+      var Array row;
+      var Block currBlock;
+      var String wall;
+
+      // Set starting point for cursor
+      do Output.moveCursor(r, 0);
+      do Board.printOffset(c);
+      
+      let CHAR_WIDTH = (Block.getMaxLength() + 3) * ncols + 1;
+      let wall = String.new(CHAR_WIDTH);
+
+      // Make wall for separating rows
+      let p = 0;
+      while (p < CHAR_WIDTH) {
+         do wall.appendChar(45);  // "-"
+         let p = p + 1;
+      }
+
+      let i = 0;
+      while (i < nrows) {
+         do Output.printString(wall);
+         do Output.println();      // New line
+         do Board.printOffset(c);
+         do Output.printString("| ");
+         let j = 0;
+         while (j < ncols) {
+            let row = grid[i];
+            let currBlock = row[j];
+            do currBlock.print();
+            do Output.printString(" | ");
+            let j = j + 1;
+         }
+         do Output.println();      // New line
+         do Board.printOffset(c);
+
+         let i = i + 1;
+      }
+      do Output.printString(wall);
+      do Output.println();      // New line
+      do Board.printOffset(c);
+
+      return;
+   }
+
+
+
+}

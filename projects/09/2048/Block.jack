@@ -1,0 +1,83 @@
+// A block representing a number or empty space.
+
+/** Implements a block. */
+class Block {
+   field int value;
+   field String displayString;
+   static int MAX_LENGTH, NULL_VALUE;
+
+   /** Constructs a new block with a given location and size. */
+   constructor Block new() {
+      let MAX_LENGTH = 6;
+      let NULL_VALUE = -1;
+      do unsetValue();
+      return this;
+   }
+
+   method void setValue(int Avalue) {
+      let value = Avalue;
+      let displayString = Block.getDisplayString(value);
+      return;
+   }
+
+   method void unsetValue() {
+      let value = NULL_VALUE;
+      let displayString = Block.getDefaultDisplayString();
+      return;
+   }
+
+   function String getDisplayString(int v) {
+      var String s0, s;
+      var int l0, l, i0, i;
+
+      let s0 = String.new(MAX_LENGTH);
+      do s0.setInt(v);
+      let l0 = s0.length();
+
+      let s = Block.getDefaultDisplayString();
+      let l = s.length();
+
+      let i0 = l0 - 1;
+      let i = l - 1;
+      while (i0 > -1) {
+         do s.setCharAt(i, s0.charAt(i0));
+         let i0 = i0 - 1;
+         let i = i - 1;
+      }
+      
+      return s;
+   }
+
+   /** If MAX_LENGTH is 6, get "......" */
+   function String getDefaultDisplayString() {
+      var int i;
+      var String s, dot;
+
+      let s = String.new(MAX_LENGTH);
+
+      while (i < MAX_LENGTH) {
+         do s.appendChar(46);  // "."
+         let i = i + 1;
+      }
+      return s;
+   }
+
+   function int getMaxLength() {
+      return MAX_LENGTH;
+   }
+
+   /** Disposes this block. */
+   method void dispose() {
+      do Memory.deAlloc(this);
+      return;
+   }
+
+   method void print() {
+      do Output.printString(displayString);
+      return;
+   }
+
+
+
+
+}
