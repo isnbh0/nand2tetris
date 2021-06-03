@@ -29,21 +29,28 @@ class BoardOps {
             let block = board.getBlockAt(r, c);
             let moved = false;
             if (~block.isEmpty()) {
-               let c_new = 0;
-               // see if it can move left
-               while ((c_new < c) & (~moved)) {
+               let c_new = c;
+               let block_new = board_new.getBlockAt(r, c_new);
+               while ((c_new > 0) & (block_new.isEmpty())) {
+                  let c_new = c_new - 1;
                   let block_new = board_new.getBlockAt(r, c_new);
-                  if (block_new.isEmpty()) {
-                     do block_new.setValue(block.getValue());
+               }
+               // see if it can move left
+               let block_new = board_new.getBlockAt(r, c_new);
+               if (block_new.isEmpty()) {
+                  do block_new.setValue(block.getValue());
+                  let moved = true;
+               }
+               else {
+                  if (block_new.getValue() = block.getValue()) {
+                     do block_new.setValue(block.getValue() * 2);
                      let moved = true;
                   }
                   else {
-                     if (block_new.getValue() = block.getValue()) {
-                        do block_new.setValue(block.getValue() * 2);
-                        let moved = true;
-                     }
+                     let block_new = board_new.getBlockAt(r, c_new + 1);
+                     do block_new.setValue(block.getValue());
+                     let moved = true;
                   }
-                  let c_new = c_new + 1;
                }
                // if can't move, stay
                if (~moved) {
@@ -75,22 +82,30 @@ class BoardOps {
             let block = board.getBlockAt(r, c);
             let moved = false;
             if (~block.isEmpty()) {
-               let r_new = 0;
-               // see if it can move up
-               while ((r_new < r) & (~moved)) {
+               let r_new = r;
+               let block_new = board_new.getBlockAt(r_new, c);
+               while ((r_new > 0) & (block_new.isEmpty())) {
+                  let r_new = r_new - 1;
                   let block_new = board_new.getBlockAt(r_new, c);
-                  if (block_new.isEmpty()) {
-                     do block_new.setValue(block.getValue());
+               }
+               // see if it can move up
+               let block_new = board_new.getBlockAt(r_new, c);
+               if (block_new.isEmpty()) {
+                  do block_new.setValue(block.getValue());
+                  let moved = true;
+               }
+               else {
+                  if (block_new.getValue() = block.getValue()) {
+                     do block_new.setValue(block.getValue() * 2);
                      let moved = true;
                   }
                   else {
-                     if (block_new.getValue() = block.getValue()) {
-                        do block_new.setValue(block.getValue() * 2);
-                        let moved = true;
-                     }
+                     let block_new = board_new.getBlockAt(r_new + 1, c);
+                     do block_new.setValue(block.getValue());
+                     let moved = true;
                   }
-                  let r_new = r_new + 1;
                }
+               let r_new = r_new + 1;
                // if can't move, stay
                if (~moved) {
                   let block_new = board_new.getBlockAt(r_new, c);
@@ -121,38 +136,33 @@ class BoardOps {
             let block = board.getBlockAt(r, c);
             let moved = false;
             if (~block.isEmpty()) {
-               let c_new = board.getNcols() - 1;
-               // see if it can move right
-               while ((c_new > c) & (~moved)) {
+               let c_new = c;
+               let block_new = board_new.getBlockAt(r, c_new);
+               while ((c_new < (board.getNcols() - 1)) & (block_new.isEmpty())) {
+                  let c_new = c_new + 1;
                   let block_new = board_new.getBlockAt(r, c_new);
-                  if (block_new.isEmpty()) {
-                     do block_new.setValue(block.getValue());
-                     do Output.printInt(7);
-                     do Output.printInt(r);
-                     do Output.printInt(c);
-                     do Output.printInt(c_new);
+               }
+               // see if it can move right
+               let block_new = board_new.getBlockAt(r, c_new);
+               if (block_new.isEmpty()) {
+                  do block_new.setValue(block.getValue());
+                  let moved = true;
+               }
+               else {
+                  if (block_new.getValue() = block.getValue()) {
+                     do block_new.setValue(block.getValue() * 2);
                      let moved = true;
                   }
                   else {
-                     if (block_new.getValue() = block.getValue()) {
-                        do block_new.setValue(block.getValue() * 2);
-                        do Output.printInt(8);
-                        do Output.printInt(r);
-                        do Output.printInt(c);
-                        do Output.printInt(c_new);
-                        let moved = true;
-                     }
+                     let block_new = board_new.getBlockAt(r, c_new - 1);
+                     do block_new.setValue(block.getValue());
+                     let moved = true;
                   }
-                  let c_new = c_new - 1;
                }
                // if can't move, stay
                if (~moved) {
                   let block_new = board_new.getBlockAt(r, c_new);
                   do block_new.setValue(block.getValue());
-                  do Output.printInt(9);
-                  do Output.printInt(r);
-                  do Output.printInt(c);
-                  do Output.printInt(c_new);
                   let moved = true;
                }
             }
@@ -179,22 +189,30 @@ class BoardOps {
             let block = board.getBlockAt(r, c);
             let moved = false;
             if (~block.isEmpty()) {
-               let r_new = board.getNrows() - 1;
-               // see if it can move up
-               while ((r_new > r) & (~moved)) {
+               let r_new = r;
+               let block_new = board_new.getBlockAt(r_new, c);
+               while ((r_new < (board.getNrows() - 1)) & (block_new.isEmpty())) {
+                  let r_new = r_new + 1;
                   let block_new = board_new.getBlockAt(r_new, c);
-                  if (block_new.isEmpty()) {
-                     do block_new.setValue(block.getValue());
+               }
+               // see if it can move down
+               let block_new = board_new.getBlockAt(r_new, c);
+               if (block_new.isEmpty()) {
+                  do block_new.setValue(block.getValue());
+                  let moved = true;
+               }
+               else {
+                  if (block_new.getValue() = block.getValue()) {
+                     do block_new.setValue(block.getValue() * 2);
                      let moved = true;
                   }
                   else {
-                     if (block_new.getValue() = block.getValue()) {
-                        do block_new.setValue(block.getValue() * 2);
-                        let moved = true;
-                     }
+                     let block_new = board_new.getBlockAt(r_new - 1, c);
+                     do block_new.setValue(block.getValue());
+                     let moved = true;
                   }
-                  let r_new = r_new - 1;
                }
+               let r_new = r_new + 1;
                // if can't move, stay
                if (~moved) {
                   let block_new = board_new.getBlockAt(r_new, c);
