@@ -1,4 +1,3 @@
-// Stuff
 
 /** Helper functions for managing Board. */
 class BoardOps {
@@ -8,7 +7,7 @@ class BoardOps {
 
       if (direction = 1) { let board_new = BoardOps.alterLeft(board); }
       if (direction = 2) { let board_new = BoardOps.alterUp(board); }
-      if (direction = 3) { let board_new = BoardOps.alterRight(board); } // might need to update in opposite direction
+      if (direction = 3) { let board_new = BoardOps.alterRight(board); }
       if (direction = 4) { let board_new = BoardOps.alterDown(board); }
 
       return board_new;
@@ -28,31 +27,35 @@ class BoardOps {
          while (r < board.getNrows()) {
             let block = board.getBlockAt(r, c);
             let moved = false;
+            // Plan movement
             if (~block.isEmpty()) {
+               // Get position of leftmost or first filled block to left
                let c_new = c;
                let block_new = board_new.getBlockAt(r, c_new);
                while ((c_new > 0) & (block_new.isEmpty())) {
                   let c_new = c_new - 1;
                   let block_new = board_new.getBlockAt(r, c_new);
                }
-               // see if it can move left
-               let block_new = board_new.getBlockAt(r, c_new);
+               // If leftmost is empty, go there
                if (block_new.isEmpty()) {
                   do block_new.setValue(block.getValue());
                   let moved = true;
                }
                else {
-                  if (block_new.getValue() = block.getValue()) {
+                  // Combine
+                  if ((~block_new.isTouched()) & (block_new.getValue() = block.getValue())) {
                      do block_new.setValue(block.getValue() * 2);
+                     do block_new.touch();
                      let moved = true;
                   }
+                  // Stop next to first filled block
                   else {
                      let block_new = board_new.getBlockAt(r, c_new + 1);
                      do block_new.setValue(block.getValue());
                      let moved = true;
                   }
                }
-               // if can't move, stay
+               // If can't move, stay
                if (~moved) {
                   let block_new = board_new.getBlockAt(r, c_new);
                   do block_new.setValue(block.getValue());
@@ -81,32 +84,37 @@ class BoardOps {
          while (c < board.getNcols()) {
             let block = board.getBlockAt(r, c);
             let moved = false;
+            // Plan movement
             if (~block.isEmpty()) {
+               // Get position of top or first filled block above
                let r_new = r;
                let block_new = board_new.getBlockAt(r_new, c);
                while ((r_new > 0) & (block_new.isEmpty())) {
                   let r_new = r_new - 1;
                   let block_new = board_new.getBlockAt(r_new, c);
                }
-               // see if it can move up
-               let block_new = board_new.getBlockAt(r_new, c);
+               // If top is empty, go there
                if (block_new.isEmpty()) {
                   do block_new.setValue(block.getValue());
                   let moved = true;
                }
                else {
-                  if (block_new.getValue() = block.getValue()) {
+                  // Combine
+                  if ((~block_new.isTouched()) & (block_new.getValue() = block.getValue())) {
                      do block_new.setValue(block.getValue() * 2);
+                     do block_new.touch();
                      let moved = true;
                   }
+                  // Stop next to first filled block
                   else {
                      let block_new = board_new.getBlockAt(r_new + 1, c);
                      do block_new.setValue(block.getValue());
                      let moved = true;
                   }
                }
+               // I don't remember why these lines exist for just up and down...
                let r_new = r_new + 1;
-               // if can't move, stay
+               // If can't move, stay
                if (~moved) {
                   let block_new = board_new.getBlockAt(r_new, c);
                   do block_new.setValue(block.getValue());
@@ -135,31 +143,35 @@ class BoardOps {
          while (r > -1) {
             let block = board.getBlockAt(r, c);
             let moved = false;
+            // Plan movement
             if (~block.isEmpty()) {
+               // Get position of rightmost or first filled block to right
                let c_new = c;
                let block_new = board_new.getBlockAt(r, c_new);
                while ((c_new < (board.getNcols() - 1)) & (block_new.isEmpty())) {
                   let c_new = c_new + 1;
                   let block_new = board_new.getBlockAt(r, c_new);
                }
-               // see if it can move right
-               let block_new = board_new.getBlockAt(r, c_new);
+               // If rightmost is empty, go there
                if (block_new.isEmpty()) {
                   do block_new.setValue(block.getValue());
                   let moved = true;
                }
                else {
-                  if (block_new.getValue() = block.getValue()) {
+                  // Combine
+                  if ((~block_new.isTouched()) & (block_new.getValue() = block.getValue())) {
                      do block_new.setValue(block.getValue() * 2);
+                     do block_new.touch();
                      let moved = true;
                   }
+                  // Stop next to first filled block
                   else {
                      let block_new = board_new.getBlockAt(r, c_new - 1);
                      do block_new.setValue(block.getValue());
                      let moved = true;
                   }
                }
-               // if can't move, stay
+               // If can't move, stay
                if (~moved) {
                   let block_new = board_new.getBlockAt(r, c_new);
                   do block_new.setValue(block.getValue());
@@ -188,32 +200,37 @@ class BoardOps {
          while (c > -1) {
             let block = board.getBlockAt(r, c);
             let moved = false;
+            // Plan movement
             if (~block.isEmpty()) {
+               // Get position of bottom or first filled block below
                let r_new = r;
                let block_new = board_new.getBlockAt(r_new, c);
                while ((r_new < (board.getNrows() - 1)) & (block_new.isEmpty())) {
                   let r_new = r_new + 1;
                   let block_new = board_new.getBlockAt(r_new, c);
                }
-               // see if it can move down
-               let block_new = board_new.getBlockAt(r_new, c);
+               // If bottom is empty, go there
                if (block_new.isEmpty()) {
                   do block_new.setValue(block.getValue());
                   let moved = true;
                }
                else {
-                  if (block_new.getValue() = block.getValue()) {
+                  // Combine
+                  if ((~block_new.isTouched()) & (block_new.getValue() = block.getValue())) {
                      do block_new.setValue(block.getValue() * 2);
+                     do block_new.touch();
                      let moved = true;
                   }
+                  // Stop next to first filled block
                   else {
                      let block_new = board_new.getBlockAt(r_new - 1, c);
                      do block_new.setValue(block.getValue());
                      let moved = true;
                   }
                }
+               // I don't remember why these lines exist for just up and down...
                let r_new = r_new + 1;
-               // if can't move, stay
+               // If can't move, stay
                if (~moved) {
                   let block_new = board_new.getBlockAt(r_new, c);
                   do block_new.setValue(block.getValue());

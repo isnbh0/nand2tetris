@@ -3,15 +3,16 @@
 /** Implements a block. */
 class Block {
    field int value;
+   field boolean touched;
    field String displayString;
    static int MAX_LENGTH, NULL_VALUE;
 
-   /** Constructs a new block with a given location and size. */
+   /** Constructs a new empty block. */
    constructor Block new() {
       let MAX_LENGTH = 4;
       let NULL_VALUE = -1;
 
-      let displayString = "";
+      let displayString = "";  // Used in case dispose bugs out in unsetValue()
       do unsetValue();
       return this;
    }
@@ -27,9 +28,20 @@ class Block {
       let value = NULL_VALUE;
       do displayString.dispose();
       let displayString = Block.getDefaultDisplayString();
+      let touched = false;
       return;
    }
 
+   method void touch() {
+      let touched = true;
+      return;
+   }
+
+   method boolean isTouched() {
+      return touched;
+   }
+
+   /** Turn 32 into "  32". */
    function String getDisplayString(int v) {
       var String s0, s;
       var int l0, l, i0, i;
@@ -53,7 +65,7 @@ class Block {
       return s;
    }
 
-   /** If MAX_LENGTH is 6, get "......" */
+   /** If MAX_LENGTH is 4, get "    " */
    function String getDefaultDisplayString() {
       var int i;
       var String s, dot;
@@ -61,8 +73,7 @@ class Block {
       let s = String.new(MAX_LENGTH);
 
       while (i < MAX_LENGTH) {
-         // do s.appendChar(46);  // "."
-         do s.appendChar(46);  // " "
+         do s.appendChar(32);  // " "
          let i = i + 1;
       }
       return s;
@@ -92,8 +103,5 @@ class Block {
       do Output.printString(displayString);
       return;
    }
-
-
-
 
 }

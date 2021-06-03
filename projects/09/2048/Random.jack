@@ -1,0 +1,39 @@
+// Originally authored by Mark Armbrust, copyright 2012.
+// Permission granted for educational use.
+// http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Random-number-generator-for-hack-cpu-tp4025503p4025505.html
+
+/** Random.jack -- A not so random PRNG. */
+
+class Random {
+    static int seed;
+    
+    function void setSeed(int newSeed) {
+        let seed = newSeed;
+        return;
+    }
+
+    function int rand() {
+        /** return a random number in the range 0..32767 */
+        let seed = seed + 20251;
+        if (seed < 0) {
+            let seed = seed - 32767 - 1;
+        }
+        return seed;
+    }
+
+    function int randRange(int range) {
+        /** return a random number in the range 0..range */
+        var int mask;
+        var int ret;
+        let mask = 1;
+        while (mask < range) {
+            let mask = mask * 2 + 1;
+        }
+        let ret = Random.rand() & mask;
+        while (ret > range) {
+            let ret = Random.rand() & mask;
+        }
+        return ret;
+    }
+
+}

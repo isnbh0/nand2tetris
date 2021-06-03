@@ -4,65 +4,96 @@
 class TwosGame {
    // Game board
    field String titleString;
+   field String instructionString;
+   field String startString;
    field Board board;
 
    constructor TwosGame new() {
-      let titleString = "Number Game! r to reset, q to quit, arrows to move";
+      let titleString = "= = = 2 0 4 8 = = =";
+      let instructionString = "Instructions: arrows to move, r to reset, q to quit";
+      let startString = "Press spacebar to start...";
+      
+      // Print main screen
+      do Output.moveCursor(1, 22);
       do Output.printString(titleString);
-      do Output.println();      // New line
-      do Output.println();      // New line
+      do Output.moveCursor(3, 7);
+      do Output.printString(instructionString);
 
       let board = Board.new(4, 4);
 
       return this;
    }
 
-   method void initialize_board() {
-      do board.populate();
-      do board.print();
-      return;
-   }
-
+   /** Main game.
+       Has two phases: start screen and game loop.
+       Start screen also helps to seed the PRNG. */
    method void run() {
       var Board board_new;
       var char key;
-      var boolean exit;
-      var int pressCount;
+      var boolean started, exit;
+      var int initSeed;
+
+      let started = false;
       let exit = false;
-      let pressCount = 0;
+      let initSeed = 0;
 
-      do initialize_board();
+      // Start screen
+      while (~started) {
+         do Output.moveCursor(11, 19);
+         do Output.printString(startString);
 
+         // Wait for key to be pressed
+         while (key = 0) {
+            let key = Keyboard.keyPressed();
+            let initSeed = initSeed + 1;
+         }
+
+         if (key = 32) {  // spacebar
+            do Random.setSeed(initSeed);
+            let started = true;
+         }
+
+         // Wait for key to be released
+         while (~(key = 0)) {
+            let key = Keyboard.keyPressed();
+         }
+      }
+
+      do board.initialize();
+
+      // Game loop
+      // TODO: have board only populate when blocks move
+      // TODO: check edge cases (there was a bug with full board)
+      // TODO: add win condition and lose condition... lol
       while (~exit) {
-         // wait for key to be pressed
+         // Wait for key to be pressed
          while (key = 0) {
             let key = Keyboard.keyPressed();
             // other actions while key is not pressed
          }
 
          if (key = 81) { let exit = true; }  // q key
-         if (key = 82) {
+         if (key = 82) {  // r key
             do board.dispose();
             let board = Board.new(4, 4);
-            do initialize_board();
-         }  // r key
-         if ((key > 129) & (key < 134)) {
-            let pressCount = pressCount + 1;
-            // do Output.printInt(pressCount);
+            do board.initialize();
+         }
+         if ((key > 129) & (key < 134)) {  // arrows
             let board_new = BoardOps.alter(board, key - 129);
 
             do board.dispose();
             let board = board_new;
 
-            do board.populate();
-
             do board.print();
-         }  // arrows
 
-         // waits for the key to be released
+            do Sys.wait(50);
+            do board.populateRNG();
+            do board.print();
+         }
+
+         // Wait for key to be released
          while (~(key = 0)) {
             let key = Keyboard.keyPressed();
-            // other actions
          }
       }
 
@@ -71,6 +102,8 @@ class TwosGame {
 
    method void dispose() {
       do titleString.dispose();
+      do instructionString.dispose();
+      do startString.dispose();
       do board.dispose();
 
       do Memory.deAlloc(this);

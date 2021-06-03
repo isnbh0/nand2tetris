@@ -1,6 +1,4 @@
-// Stuff
-
-/** 2048 program. */
+/** 2048 game. */
 class Main {
    function void main() {
       var TwosGame game;
