@@ -66,8 +66,18 @@ class Block {
       return MAX_LENGTH;
    }
 
+   method bool isEmpty() {
+      return value = NULL_VALUE;
+   }
+
+   method int getValue() {
+      return value;
+   }
+
    /** Disposes this block. */
    method void dispose() {
+      do displayString.dispose();
+
       do Memory.deAlloc(this);
       return;
    }

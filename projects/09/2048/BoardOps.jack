@@ -1,0 +1,201 @@
+// Stuff
+
+/** Helper functions for managing Board. */
+class BoardOps {
+   /** Alter board by moving. Return an updated copy of the board. */
+   function Board alter(Board board, int direction) {
+      var Board board_new;
+
+      if (direction = 1) { let board_new = BoardOps.alterLeft(board); }
+      if (direction = 2) { let board_new = BoardOps.alterUp(board); }
+      if (direction = 3) { let board_new = BoardOps.alterRight(board); } // might need to update in opposite direction
+      if (direction = 4) { let board_new = BoardOps.alterDown(board); }
+
+      return board_new;
+   }
+
+   function Board alterLeft(Board board) {
+      var Board board_new;
+      var Block block, block_new;
+      var int r, c, c_new;
+      var boolean moved;
+
+      let board_new = Board.new(board.getNrows(), board.getNcols());
+
+      let c = 0;
+      while (c < board.getNcols()) {
+         let r = 0;
+         while (r < board.getNrows()) {
+            let block = board.getBlockAt(r, c);
+            let moved = false;
+            if (~block.isEmpty()) {
+               let c_new = 0;
+               // see if it can move left
+               while ((c_new < c) & (~moved)) {
+                  let block_new = board_new.getBlockAt(r, c_new);
+                  if (block_new.isEmpty()) {
+                     do block_new.setValue(block.getValue());
+                     let moved = true;
+                  }
+                  else {
+                     if (block_new.getValue() = block.getValue()) {
+                        do block_new.setValue(block.getValue() * 2);
+                        let moved = true;
+                     }
+                  }
+                  let c_new = c_new + 1;
+               }
+               // if can't move, stay
+               if (~moved) {
+                  let block_new = board_new.getBlockAt(r, c_new);
+                  do block_new.setValue(block.getValue());
+                  let moved = true;
+               }
+            }
+            let r = r + 1;
+         }
+         let c = c + 1;
+      }
+      do board.dispose();
+      return board_new;
+   }
+
+   function Board alterUp(Board board) {
+      var Board board_new;
+      var Block block, block_new;
+      var int r, c, r_new;
+      var boolean moved;
+
+      let board_new = Board.new(board.getNrows(), board.getNcols());
+
+      let r = 0;
+      while (r < board.getNrows()) {
+         let c = 0;
+         while (c < board.getNcols()) {
+            let block = board.getBlockAt(r, c);
+            let moved = false;
+            if (~block.isEmpty()) {
+               let r_new = 0;
+               // see if it can move up
+               while ((r_new < r) & (~moved)) {
+                  let block_new = board_new.getBlockAt(r_new, c);
+                  if (block_new.isEmpty()) {
+                     do block_new.setValue(block.getValue());
+                     let moved = true;
+                  }
+                  else {
+                     if (block_new.getValue() = block.getValue()) {
+                        do block_new.setValue(block.getValue() * 2);
+                        let moved = true;
+                     }
+                  }
+                  let r_new = r_new + 1;
+               }
+               // if can't move, stay
+               if (~moved) {
+                  let block_new = board_new.getBlockAt(r_new, c);
+                  do block_new.setValue(block.getValue());
+                  let moved = true;
+               }
+            }
+            let c = c + 1;
+         }
+         let r = r + 1;
+      }
+      do board.dispose();
+      return board_new;
+   }
+
+   function Board alterRight(Board board) {
+      var Board board_new;
+      var Block block, block_new;
+      var int r, c, c_new;
+      var boolean moved;
+
+      let board_new = Board.new(board.getNrows(), board.getNcols());
+
+      let c = board.getNcols() - 1;
+      while (c > -1) {
+         let r = board.getNcols() - 1;
+         while (r > -1) {
+            let block = board.getBlockAt(r, c);
+            let moved = false;
+            if (~block.isEmpty()) {
+               let c_new = board.getNcols() - 1;
+               // see if it can move right
+               while ((c_new > c) & (~moved)) {
+                  let block_new = board_new.getBlockAt(r, c_new);
+                  if (block_new.isEmpty()) {
+                     do block_new.setValue(block.getValue());
+                     let moved = true;
+                  }
+                  else {
+                     if (block_new.getValue() = block.getValue()) {
+                        do block_new.setValue(block.getValue() * 2);
+                        let moved = true;
+                     }
+                  }
+                  let c_new = c_new - 1;
+               }
+               // if can't move, stay
+               if (~moved) {
+                  let block_new = board_new.getBlockAt(r, c_new);
+                  do block_new.setValue(block.getValue());
+                  let moved = true;
+               }
+            }
+            let r = r - 1;
+         }
+         let c = c - 1;
+      }
+      do board.dispose();
+      return board_new;
+   }
+
+   function Board alterDown(Board board) {
+      var Board board_new;
+      var Block block, block_new;
+      var int r, c, r_new;
+      var boolean moved;
+
+      let board_new = Board.new(board.getNrows(), board.getNcols());
+
+      let r = board.getNrows() - 1;
+      while (r > -1) {
+         let c = board.getNrows() - 1;
+         while (c > -1) {
+            let block = board.getBlockAt(r, c);
+            let moved = false;
+            if (~block.isEmpty()) {
+               let r_new = board.getNrows() - 1;
+               // see if it can move up
+               while ((r_new > r) & (~moved)) {
+                  let block_new = board_new.getBlockAt(r_new, c);
+                  if (block_new.isEmpty()) {
+                     do block_new.setValue(block.getValue());
+                     let moved = true;
+                  }
+                  else {
+                     if (block_new.getValue() = block.getValue()) {
+                        do block_new.setValue(block.getValue() * 2);
+                        let moved = true;
+                     }
+                  }
+                  let r_new = r_new - 1;
+               }
+               // if can't move, stay
+               if (~moved) {
+                  let block_new = board_new.getBlockAt(r_new, c);
+                  do block_new.setValue(block.getValue());
+                  let moved = true;
+               }
+            }
+            let c = c - 1;
+         }
+         let r = r - 1;
+      }
+      do board.dispose();
+      return board_new;
+   }
+
+}

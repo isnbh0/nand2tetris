@@ -1,0 +1,69 @@
+// Stuff
+
+/** 2048 game manager. */
+class TwosGame {
+   // Game board
+   field Board board;
+
+   constructor TwosGame new() {
+      do Output.printString("Number Game!");
+      do Output.println();      // New line
+      do Output.println();      // New line
+
+      let board = Board.new(4, 4);
+
+      return this;
+   }
+
+   method void initialize_board() {
+      do board.populate();
+      do board.print();
+      return;
+   }
+
+   method void run() {
+      var Board board_new;
+      var char key;
+      var boolean exit;
+      var int pressCount;
+      let exit = false;
+      let pressCount = 0;
+
+      do initialize_board();
+
+      while (~exit) {
+         // wait for key to be pressed
+         while (key = 0) {
+            let key = Keyboard.keyPressed();
+            // other actions while key is not pressed
+         }
+
+         if (key = 81) { let exit = true; }  // q key
+         if ((key > 129) & (key < 134)) {
+            let pressCount = pressCount + 1;
+            // do Output.printInt(pressCount);
+            let board_new = BoardOps.alter(board, key - 129);
+
+            do board.dispose();
+            let board = board_new;
+
+            do board.print();
+         }  // arrows
+
+         // waits for the key to be released
+         while (~(key = 0)) {
+            let key = Keyboard.keyPressed();
+            // other actions
+         }
+      }
+
+      return;
+   }
+
+   method void dispose() {
+      do board.dispose();
+
+      do Memory.deAlloc(this);
+      return;
+   }
+}

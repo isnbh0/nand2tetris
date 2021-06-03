@@ -3,20 +3,14 @@
 /** 2048 program. */
 class Main {
    function void main() {
-      var Board board;
-      var int r, c;
-      let r = 4;
-      let c = 10;
+      var TwosGame game;
 
-      do Output.printString("Number Game!");
-      do Output.println();      // New line
-      do Output.println();      // New line
+      // start
+      let game = TwosGame.new();
+      do game.run();
 
-      let board = Board.new(4, 4);
-
-      do board.print(r, c);
-
-
+      // finish
+      do game.dispose();
       return;
    }
 }
