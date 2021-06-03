@@ -8,20 +8,24 @@ class Block {
 
    /** Constructs a new block with a given location and size. */
    constructor Block new() {
-      let MAX_LENGTH = 6;
+      let MAX_LENGTH = 4;
       let NULL_VALUE = -1;
+
+      let displayString = "";
       do unsetValue();
       return this;
    }
 
    method void setValue(int Avalue) {
       let value = Avalue;
+      do displayString.dispose();
       let displayString = Block.getDisplayString(value);
       return;
    }
 
    method void unsetValue() {
       let value = NULL_VALUE;
+      do displayString.dispose();
       let displayString = Block.getDefaultDisplayString();
       return;
    }
@@ -45,6 +49,7 @@ class Block {
          let i = i - 1;
       }
       
+      do s0.dispose();
       return s;
    }
 
@@ -56,7 +61,8 @@ class Block {
       let s = String.new(MAX_LENGTH);
 
       while (i < MAX_LENGTH) {
-         do s.appendChar(46);  // "."
+         // do s.appendChar(46);  // "."
+         do s.appendChar(46);  // " "
          let i = i + 1;
       }
       return s;

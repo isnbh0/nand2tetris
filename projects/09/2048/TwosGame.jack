@@ -3,10 +3,12 @@
 /** 2048 game manager. */
 class TwosGame {
    // Game board
+   field String titleString;
    field Board board;
 
    constructor TwosGame new() {
-      do Output.printString("Number Game!");
+      let titleString = "Number Game! r to reset, q to quit, arrows to move";
+      do Output.printString(titleString);
       do Output.println();      // New line
       do Output.println();      // New line
 
@@ -39,6 +41,11 @@ class TwosGame {
          }
 
          if (key = 81) { let exit = true; }  // q key
+         if (key = 82) {
+            do board.dispose();
+            let board = Board.new(4, 4);
+            do initialize_board();
+         }  // r key
          if ((key > 129) & (key < 134)) {
             let pressCount = pressCount + 1;
             // do Output.printInt(pressCount);
@@ -46,6 +53,8 @@ class TwosGame {
 
             do board.dispose();
             let board = board_new;
+
+            do board.populate();
 
             do board.print();
          }  // arrows
@@ -61,6 +70,7 @@ class TwosGame {
    }
 
    method void dispose() {
+      do titleString.dispose();
       do board.dispose();
 
       do Memory.deAlloc(this);

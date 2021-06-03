@@ -8,6 +8,8 @@ class Main {
     function void main() {
         var SquareGame game;
         let game = SquareGame.new();
+        do Output.moveCursor(10, 10);
+        do Output.printString("Square GaME");
         do game.run();
         do game.dispose();
         return;

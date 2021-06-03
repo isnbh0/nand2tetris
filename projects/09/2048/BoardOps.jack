@@ -116,7 +116,7 @@ class BoardOps {
 
       let c = board.getNcols() - 1;
       while (c > -1) {
-         let r = board.getNcols() - 1;
+         let r = board.getNrows() - 1;
          while (r > -1) {
             let block = board.getBlockAt(r, c);
             let moved = false;
@@ -127,11 +127,19 @@ class BoardOps {
                   let block_new = board_new.getBlockAt(r, c_new);
                   if (block_new.isEmpty()) {
                      do block_new.setValue(block.getValue());
+                     do Output.printInt(7);
+                     do Output.printInt(r);
+                     do Output.printInt(c);
+                     do Output.printInt(c_new);
                      let moved = true;
                   }
                   else {
                      if (block_new.getValue() = block.getValue()) {
                         do block_new.setValue(block.getValue() * 2);
+                        do Output.printInt(8);
+                        do Output.printInt(r);
+                        do Output.printInt(c);
+                        do Output.printInt(c_new);
                         let moved = true;
                      }
                   }
@@ -141,6 +149,10 @@ class BoardOps {
                if (~moved) {
                   let block_new = board_new.getBlockAt(r, c_new);
                   do block_new.setValue(block.getValue());
+                  do Output.printInt(9);
+                  do Output.printInt(r);
+                  do Output.printInt(c);
+                  do Output.printInt(c_new);
                   let moved = true;
                }
             }
@@ -162,7 +174,7 @@ class BoardOps {
 
       let r = board.getNrows() - 1;
       while (r > -1) {
-         let c = board.getNrows() - 1;
+         let c = board.getNcols() - 1;
          while (c > -1) {
             let block = board.getBlockAt(r, c);
             let moved = false;
