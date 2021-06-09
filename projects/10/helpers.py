@@ -11,6 +11,7 @@ def is_generator_empty(generator):
         return True, b
     return False, b
 
+
 token_dict = {
     "keyword": (
         r"class|constructor|function|"
@@ -19,14 +20,10 @@ token_dict = {
         r"false|null|this|let|do|"
         r"if|else|while|return"
     ),
-    "symbol": (
-        r"\{|\}|\(|\)|\[|\]|\.|"
-        r",|;|\+|\-|\*|/|&|"
-        r"\||<|>|=|~"
-    ),
+    "symbol": (r"\{|\}|\(|\)|\[|\]|\.|" r",|;|\+|\-|\*|/|&|" r"\||<|>|=|~"),
     "integerConstant": (
-        r"[0-9]|[1-9][0-9]{1,3}|[12][0-9]{4}|"
-        r"3[01][0-9]{3}|32[0-6][0-9]{2}|327[0-5][0-9]|3276[0-7]"
+        r"3276[0-7]|327[0-5][0-9]|32[0-6][0-9]{2}|3[01][0-9]{3}|"
+        r"[12][0-9]{4}|[1-9][0-9]{1,3}|[0-9]"
     ),
     "stringConstant": r'"[^\"\n]+"',
     "identifier": r"[a-zA-Z_]\w*",
@@ -42,11 +39,13 @@ token = (
 
 token_re = re.compile(token)
 
+
 def get_token_type(token: str) -> str:
     for k, v in token_dict.items():
         if re.fullmatch(v, token):
             return k
     raise ValueError("Token type not found")
+
 
 def escape_token(token: str) -> str:
     d_esc = {
@@ -58,6 +57,7 @@ def escape_token(token: str) -> str:
     if token in d_esc:
         token = d_esc[token]
     return token
+
 
 def inc_sp(res):
     res += ["@SP", "M=M+1"]

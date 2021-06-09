@@ -6,7 +6,7 @@ from enum import Enum
 from jackanalyzer import JackTokenizer
 
 
-def translate_single_file(file_path):
+def tokenize_single_file(file_path):
     jt = JackTokenizer(file_path=file_path)
 
     out_path = file_path.replace(".jack", "T_out.xml")
@@ -35,4 +35,4 @@ if __name__ == "__main__":
     if os.path.isdir(path):
         pass
     else:
-        translate_single_file(file_path=path)
+        tokenize_single_file(file_path=path)
