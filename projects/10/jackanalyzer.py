@@ -133,7 +133,7 @@ class CompilationEngine:
 
     def _i(self, s: str) -> str:
         return "  " * self.level + s
-    
+
     def _append_with_indent(self, s: str):
         to_append = self._i(s)
         self.output.append(to_append)
@@ -291,10 +291,8 @@ class CompilationEngine:
         if self._at_type():
             # type
             self._append_and_advance()
-
             # varName
             self._append_and_advance_identifier()
-
             # (',' type varName)*
             while self._at_symbol(","):
                 # ','
@@ -417,13 +415,10 @@ class CompilationEngine:
         if self._at_keyword(keywords=(K.ELSE,)):
             # 'else'
             self._append_and_advance_keyword(keywords=(K.ELSE,))
-
             # '{'
             self._append_and_advance_symbol("{")
-
             # statements
             self.compileStatements()
-
             # '}'
             self._append_and_advance_symbol("}")
 
@@ -469,30 +464,24 @@ class CompilationEngine:
         # identifier
         self._append_and_advance_identifier()
 
-        if self._at_symbol('('):  # subroutineName
+        if self._at_symbol("("):  # subroutineName
             # '('
-            self._append_and_advance_symbol('(')
-
+            self._append_and_advance_symbol("(")
             # expressionList
             self.compileExpressionList()
-
             # ')'
-            self._append_and_advance_symbol(')')
-        elif self._at_symbol('.'):  # (className | varName)
+            self._append_and_advance_symbol(")")
+        elif self._at_symbol("."):  # (className | varName)
             # '.'
-            self._append_and_advance_symbol('.')
-
+            self._append_and_advance_symbol(".")
             # subroutineName
             self._append_and_advance_identifier()
-
             # '('
-            self._append_and_advance_symbol('(')
-
+            self._append_and_advance_symbol("(")
             # expressionList
             self.compileExpressionList()
-
             # ')'
-            self._append_and_advance_symbol(')')
+            self._append_and_advance_symbol(")")
         else:
             raise ValueError("Unrecognized syntax for subroutine call")
 
@@ -511,11 +500,11 @@ class CompilationEngine:
 
         # expression?
         # TODO: fix this?
-        if not self._at_symbol(';'):
+        if not self._at_symbol(";"):
             self.compileExpression()
 
         # ';'
-        self._append_and_advance_symbol(';')
+        self._append_and_advance_symbol(";")
 
         self.level -= 1
         self._append_with_indent("</returnStatement>")
@@ -548,18 +537,47 @@ class CompilationEngine:
         elif token_type == T.STRING_CONST:
             self._append_and_advance()
         elif token_type == T.KEYWORD:
+            assert self.jt.keyWord in (K.TRUE, K.FALSE, K.NULL, K.THIS)
             self._append_and_advance()
         elif token_type == T.IDENTIFIER:
-            # FIXME: this is the complex case
             self._append_and_advance_identifier()
+            if self._at_symbol("["):
+                # '['
+                self._append_and_advance_symbol("[")
+                # expression
+                self.compileExpression()
+                # ']'
+                self._append_and_advance_symbol("]")
+            elif self._at_symbol("("):
+                # '('
+                self._append_and_advance_symbol("(")
+                # expressionList
+                self.compileExpressionList()
+                # ')'
+                self._append_and_advance_symbol(")")
+            elif self._at_symbol("."):
+                # '.'
+                self._append_and_advance_symbol(".")
+                # subroutineName
+                self._append_and_advance_identifier()
+                # '('
+                self._append_and_advance_symbol("(")
+                # expressionList
+                self.compileExpressionList()
+                # ')'
+                self._append_and_advance_symbol(")")
+            else:
+                pass
         elif token_type == T.SYMBOL and self.jt.symbol == "(":
             # '(' expression ')'
             self._append_and_advance_symbol("(")
             self.compileExpression()
             self._append_and_advance_symbol(")")
         elif token_type == T.SYMBOL and self.jt.symbol in ("-", "~"):
-            # unaryOp term
+            # unaryOp
             self._append_and_advance_symbols(symbols=("-", "~"))
+            # term
+            self.compileTerm()
         else:
             raise Exception("Token type not found")
 
@@ -574,7 +592,6 @@ class CompilationEngine:
         if not self._at_symbol(")"):
             # expression
             self.compileExpression()
-
             # (',' expression)*
             while self._at_symbol(","):
                 # ','
@@ -610,6 +627,7 @@ if __name__ == "__main__":
     path = args.path
 
     if os.path.isdir(path):
+        pass
         # analyze_directory(path=path)
     else:
         analyze_single_file(file_path=path)

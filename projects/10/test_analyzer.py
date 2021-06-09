@@ -6,13 +6,23 @@ import sys
 
 
 def test_single_file(file_path):
-    subprocess.run(['python', '-c', 'import sys; print(sys.executable)'], stdout=sys.stdout, check=True)
+    subprocess.run(
+        ["python", "-c", "import sys; print(sys.executable)"],
+        stdout=sys.stdout,
+        check=True,
+    )
 
-    subprocess.run(['python', 'jackanalyzer.py', file_path], stdout=sys.stdout, check=True)
+    subprocess.run(
+        ["python", "jackanalyzer.py", file_path], stdout=sys.stdout, check=True
+    )
 
     expected_path = re.sub(r"\.jack$", r".xml", file_path)
     result_path = re.sub(r"\.jack$", r"out.xml", file_path)
-    subprocess.run(['../../tools/TextComparer.sh', expected_path, result_path], stdout=sys.stdout, check=True)
+    subprocess.run(
+        ["../../tools/TextComparer.sh", expected_path, result_path],
+        stdout=sys.stdout,
+        check=True,
+    )
 
 
 if __name__ == "__main__":
@@ -27,7 +37,9 @@ if __name__ == "__main__":
 
     if os.path.isdir(path):
         file_paths = [
-            os.path.join(path, file) for file in os.listdir(path) if file.endswith(".jack")
+            os.path.join(path, file)
+            for file in os.listdir(path)
+            if file.endswith(".jack")
         ]
         for file_path in file_paths:
             print(f"Processing {file_path}...")
