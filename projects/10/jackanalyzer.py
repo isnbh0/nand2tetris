@@ -184,10 +184,21 @@ class CompilationEngine:
         assert self._at_identifier()
         self._append_and_advance()
 
-    def compileClass(self):
-        self._append_with_indent("<class>")
-        self.level += 1
+    def bookend(keyword: str):
+        def decorate(f):
+            def f_new(self):
+                self._append_with_indent(f"<{keyword}>")
+                self.level += 1
+                f(self)
+                self.level -= 1
+                self._append_with_indent(f"</{keyword}>")
 
+            return f_new
+
+        return decorate
+
+    @bookend(keyword="class")
+    def compileClass(self):
         # 'class'
         self._append_and_advance_keyword(keywords=(K.CLASS,))
 
@@ -208,13 +219,8 @@ class CompilationEngine:
         # '}'
         self._append_and_advance_symbol("}")
 
-        self.level -= 1
-        self._append_with_indent("</class>")
-
+    @bookend(keyword="classVarDec")
     def compileClassVarDec(self):
-        self._append_with_indent("<classVarDec>")
-        self.level += 1
-
         # ('static' | 'field')
         self._append_and_advance_keyword(keywords=(K.STATIC, K.FIELD))
 
@@ -234,13 +240,8 @@ class CompilationEngine:
         # ';'
         self._append_and_advance_symbol(";")
 
-        self.level -= 1
-        self._append_with_indent("</classVarDec>")
-
+    @bookend(keyword="subroutineDec")
     def compileSubroutine(self):
-        self._append_with_indent("<subroutineDec>")
-        self.level += 1
-
         # ('constructor' | 'function' | 'method')
         self._append_and_advance_keyword(keywords=(K.CONSTRUCTOR, K.FUNCTION, K.METHOD))
 
@@ -280,13 +281,8 @@ class CompilationEngine:
         self.level -= 1
         self._append_with_indent("</subroutineBody>")
 
-        self.level -= 1
-        self._append_with_indent("</subroutineDec>")
-
+    @bookend(keyword="parameterList")
     def compileParameterList(self):
-        self._append_with_indent("<parameterList>")
-        self.level += 1
-
         # ((type varName) (',' type varName)*)?
         if self._at_type():
             # type
@@ -302,13 +298,8 @@ class CompilationEngine:
                 # varName
                 self._append_and_advance_identifier()
 
-        self.level -= 1
-        self._append_with_indent("</parameterList>")
-
+    @bookend(keyword="varDec")
     def compileVarDec(self):
-        self._append_with_indent("<varDec>")
-        self.level += 1
-
         # 'var'
         self._append_and_advance_keyword(keywords=(K.VAR,))
 
@@ -328,13 +319,8 @@ class CompilationEngine:
         # ';'
         self._append_and_advance_symbol(";")
 
-        self.level -= 1
-        self._append_with_indent("</varDec>")
-
+    @bookend(keyword="statements")
     def compileStatements(self):
-        self._append_with_indent("<statements>")
-        self.level += 1
-
         while self._at_keyword(keywords=(K.LET, K.IF, K.WHILE, K.DO, K.RETURN)):
             keyword = self.jt.keyWord
             if keyword == K.LET:
@@ -350,13 +336,8 @@ class CompilationEngine:
             else:
                 raise Exception("This point should not be reachable")
 
-        self.level -= 1
-        self._append_with_indent("</statements>")
-
+    @bookend(keyword="letStatement")
     def compileLet(self):
-        self._append_with_indent("<letStatement>")
-        self.level += 1
-
         # 'let'
         self._append_and_advance_keyword(keywords=(K.LET,))
 
@@ -383,13 +364,8 @@ class CompilationEngine:
         # ';'
         self._append_and_advance_symbol(";")
 
-        self.level -= 1
-        self._append_with_indent("</letStatement>")
-
+    @bookend(keyword="ifStatement")
     def compileIf(self):
-        self._append_with_indent("<ifStatement>")
-        self.level += 1
-
         # 'if'
         self._append_and_advance_keyword(keywords=(K.IF,))
 
@@ -422,13 +398,8 @@ class CompilationEngine:
             # '}'
             self._append_and_advance_symbol("}")
 
-        self.level -= 1
-        self._append_with_indent("</ifStatement>")
-
+    @bookend(keyword="whileStatement")
     def compileWhile(self):
-        self._append_with_indent("<whileStatement>")
-        self.level += 1
-
         # 'while'
         self._append_and_advance_keyword(keywords=(K.WHILE,))
 
@@ -450,13 +421,8 @@ class CompilationEngine:
         # '}'
         self._append_and_advance_symbol("}")
 
-        self.level -= 1
-        self._append_with_indent("</whileStatement>")
-
+    @bookend(keyword="doStatement")
     def compileDo(self):
-        self._append_with_indent("<doStatement>")
-        self.level += 1
-
         # 'do'
         self._append_and_advance_keyword(keywords=(K.DO,))
 
@@ -488,13 +454,8 @@ class CompilationEngine:
         # ';'
         self._append_and_advance_symbol(";")
 
-        self.level -= 1
-        self._append_with_indent("</doStatement>")
-
+    @bookend(keyword="returnStatement")
     def compileReturn(self):
-        self._append_with_indent("<returnStatement>")
-        self.level += 1
-
         # 'return'
         self._append_and_advance_keyword(keywords=(K.RETURN,))
 
@@ -506,13 +467,8 @@ class CompilationEngine:
         # ';'
         self._append_and_advance_symbol(";")
 
-        self.level -= 1
-        self._append_with_indent("</returnStatement>")
-
+    @bookend(keyword="expression")
     def compileExpression(self):
-        self._append_with_indent("<expression>")
-        self.level += 1
-
         # term
         self.compileTerm()
 
@@ -524,13 +480,8 @@ class CompilationEngine:
             # term
             self.compileTerm()
 
-        self.level -= 1
-        self._append_with_indent("</expression>")
-
+    @bookend(keyword="term")
     def compileTerm(self):
-        self._append_with_indent("<term>")
-        self.level += 1
-
         token_type = self.jt.tokenType
         if token_type == T.INT_CONST:
             self._append_and_advance()
@@ -581,13 +532,8 @@ class CompilationEngine:
         else:
             raise Exception("Token type not found")
 
-        self.level -= 1
-        self._append_with_indent("</term>")
-
+    @bookend(keyword="expressionList")
     def compileExpressionList(self):
-        self._append_with_indent("<expressionList>")
-        self.level += 1
-
         # (expression (',' expression)*)?
         if not self._at_symbol(")"):
             # expression
@@ -598,9 +544,6 @@ class CompilationEngine:
                 self._append_and_advance_symbol(",")
                 # expression
                 self.compileExpression()
-
-        self.level -= 1
-        self._append_with_indent("</expressionList>")
 
     def to_disk(self, file_path: str):
         with open(file_path, "w") as f:
@@ -627,7 +570,6 @@ if __name__ == "__main__":
     path = args.path
 
     if os.path.isdir(path):
-        pass
-        # analyze_directory(path=path)
+        raise ValueError("Only supports file-level analysis")
     else:
         analyze_single_file(file_path=path)
