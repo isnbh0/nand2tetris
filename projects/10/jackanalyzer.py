@@ -435,7 +435,7 @@ class CompilationEngine:
         self.level += 1
 
         # 'while'
-        self._append_and_advance_keyword(keywords=(K.IF,))
+        self._append_and_advance_keyword(keywords=(K.WHILE,))
 
         # '('
         self._append_and_advance_symbol("(")
@@ -571,7 +571,7 @@ class CompilationEngine:
         self.level += 1
 
         # (expression (',' expression)*)?
-        if self._at_type():
+        if not self._at_symbol(")"):
             # expression
             self.compileExpression()
 
@@ -599,31 +599,6 @@ def analyze_single_file(file_path):
     ce.to_disk(file_path=file_path.replace(".jack", "out.xml"))
 
 
-def translate_directory(path, skip_bootstrap=False):
-    directory_name = re.findall(r"\w+", path)[-1]
-    file_paths = [
-        os.path.join(path, file) for file in os.listdir(path) if file.endswith(".vm")
-    ]
-
-    ps = [Parser(file_path) for file_path in file_paths]
-    file_names = [re.findall(r"\w+", file_path)[-2] for file_path in file_paths]
-
-    cw = CodeWriter()
-    if not skip_bootstrap:
-        cw.writeInit()
-    for p, file_name in zip(ps, file_names):
-        cw.setFileName(file_name=file_name)
-
-        while True:
-            cmd = p.cmd.split()
-            cw.writeLine(*cmd)
-            if p.hasMoreCommands:
-                p.advance()
-            else:
-                break
-    cw.to_disk(file_path=(os.path.join(path, directory_name + ".asm")))
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
@@ -635,6 +610,6 @@ if __name__ == "__main__":
     path = args.path
 
     if os.path.isdir(path):
-        translate_directory(path=path, skip_bootstrap=skip_bootstrap)
+        # analyze_directory(path=path)
     else:
         analyze_single_file(file_path=path)
