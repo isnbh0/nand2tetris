@@ -4,12 +4,8 @@ import re
 import typing as t
 
 from enum import Enum
-from types import MethodDescriptorType
 
 import helpers as h
-
-
-# TODO: try to add decorator pattern
 
 
 class T(str, Enum):
@@ -460,7 +456,6 @@ class CompilationEngine:
         self._append_and_advance_keyword(keywords=(K.RETURN,))
 
         # expression?
-        # TODO: fix this?
         if not self._at_symbol(";"):
             self.compileExpression()
 

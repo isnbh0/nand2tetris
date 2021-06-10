@@ -13,4 +13,3 @@ for d in dirs:
         os.remove(f)
 
 print("Done.")
-
