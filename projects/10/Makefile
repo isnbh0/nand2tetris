@@ -1,3 +1,5 @@
+all: test clean
+
 clean:
 	python scripts/clean.py
 
