@@ -1,4 +1,10 @@
 *.out
+*.asm
+*.hack
+*.vm
+*.xml
+
+*.ipynb
 .ipynb_checkpoints
 __pycache__
 
