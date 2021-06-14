@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class T(str, Enum):
+class TokenType(str, Enum):
     KEYWORD = "keyword"
     SYMBOL = "symbol"
     IDENTIFIER = "identifier"
@@ -9,7 +9,7 @@ class T(str, Enum):
     STRING_CONST = "stringConstant"
 
 
-class K(str, Enum):
+class Keyword(str, Enum):
     CLASS = "class"
     METHOD = "method"
     FUNCTION = "function"
@@ -31,3 +31,25 @@ class K(str, Enum):
     FALSE = "false"
     NULL = "null"
     THIS = "this"
+
+
+class SymbolKind(str, Enum):
+    STATIC = "static"
+    FIELD = "field"
+    ARG = "arg"
+    VAR = "var"
+    NONE = "none"
+
+
+class Category(str, Enum):
+    VAR = "var"
+    ARGUMENT = "argument"
+    STATIC = "static"
+    FIELD = "field"
+    CLASS = "class"
+    SUBROUTINE = "subroutine"
+
+
+class Verb(str, Enum):
+    DEFINE = "define"
+    USE = "use"

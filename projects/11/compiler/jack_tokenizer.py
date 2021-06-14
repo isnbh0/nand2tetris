@@ -1,6 +1,6 @@
 import re
 
-from compiler.utils.constants import T, K
+from compiler.utils.constants import TokenType, Keyword
 import compiler.utils.helpers as h
 
 
@@ -36,15 +36,15 @@ class JackTokenizer:
     def tokenType(self) -> str:
         token_type = h.get_token_type(self.tkn)
         if token_type == "keyword":
-            return T.KEYWORD
+            return TokenType.KEYWORD
         elif token_type == "symbol":
-            return T.SYMBOL
+            return TokenType.SYMBOL
         elif token_type == "identifier":
-            return T.IDENTIFIER
+            return TokenType.IDENTIFIER
         elif token_type == "integerConstant":
-            return T.INT_CONST
+            return TokenType.INT_CONST
         elif token_type == "stringConstant":
-            return T.STRING_CONST
+            return TokenType.STRING_CONST
         else:
             raise ValueError
 
@@ -53,35 +53,35 @@ class JackTokenizer:
 
     @staticmethod
     def get_tag(tkn, tokenType):
-        if tokenType == T.STRING_CONST:
+        if tokenType == TokenType.STRING_CONST:
             tkn = tkn[1:-1]
-        elif tokenType == T.SYMBOL:
+        elif tokenType == TokenType.SYMBOL:
             tkn = h.escape_token(tkn)
         else:
             tkn = tkn
         return f"<{tokenType}> {tkn} </{tokenType}>"
 
     @property
-    def keyWord(self) -> K:
-        assert self.tokenType == T.KEYWORD
+    def keyWord(self) -> Keyword:
+        assert self.tokenType == TokenType.KEYWORD
         return self.tkn
 
     @property
     def symbol(self) -> str:
-        assert self.tokenType == T.SYMBOL
+        assert self.tokenType == TokenType.SYMBOL
         return self.tkn
 
     @property
     def identifier(self) -> str:
-        assert self.tokenType == T.IDENTIFIER
+        assert self.tokenType == TokenType.IDENTIFIER
         return self.tkn
 
     @property
     def intVal(self) -> int:
-        assert self.tokenType == T.INT_CONST
+        assert self.tokenType == TokenType.INT_CONST
         return self.tkn
 
     @property
     def stringVal(self) -> str:
-        assert self.tokenType == T.STRING_CONST
+        assert self.tokenType == TokenType.STRING_CONST
         return self.tkn

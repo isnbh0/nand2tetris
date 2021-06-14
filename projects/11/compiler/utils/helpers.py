@@ -2,6 +2,8 @@ import itertools
 import re
 import typing as t
 
+from compiler.utils.constants import Category, SymbolKind
+
 
 def is_generator_empty(generator):
     a, b = itertools.tee(generator)
@@ -57,3 +59,22 @@ def escape_token(token: str) -> str:
     if token in d_esc:
         token = d_esc[token]
     return token
+
+
+def is_symbol(category: Category) -> bool:
+    return category in (
+        Category.VAR,
+        Category.ARGUMENT,
+        Category.STATIC,
+        Category.FIELD,
+    )
+
+
+def cat2kind(category: Category) -> SymbolKind:
+    map_ = {
+        Category.VAR: SymbolKind.VAR,
+        Category.ARGUMENT: SymbolKind.ARG,
+        Category.STATIC: SymbolKind.STATIC,
+        Category.FIELD: SymbolKind.FIELD,
+    }
+    return map_[category]
