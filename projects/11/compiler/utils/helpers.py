@@ -2,7 +2,8 @@ import itertools
 import re
 import typing as t
 
-from compiler.utils.constants import Category, SymbolKind
+from compiler.utils.constants import Category, SymbolKind, Keyword, Segment
+from compiler.vm_writer import VMWriter
 
 
 def is_generator_empty(generator):
@@ -78,3 +79,33 @@ def cat2kind(category: Category) -> SymbolKind:
         Category.FIELD: SymbolKind.FIELD,
     }
     return map_[category]
+
+
+binop_map = {
+    "+": "add",
+    "-": "sub",
+    "*": "call Math.multiply 2",
+    "/": "call Math.divide 2",
+    "&": "and",
+    "|": "or",
+    "<": "lt",
+    ">": "gt",
+    "=": "eq",
+}
+binops = tuple(binop_map.keys())
+
+unop_map = {
+    "-": "neg",
+    "~": "not",
+}
+unops = tuple(unop_map.keys())
+
+
+def kind2segment(kind: SymbolKind):
+    if kind == SymbolKind.FIELD:
+        segment = Segment.THIS
+    elif kind == SymbolKind.VAR:
+        segment = Segment.LOCAL
+    else:
+        segment = kind
+    return segment

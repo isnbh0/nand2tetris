@@ -39,6 +39,7 @@ class SymbolKind(str, Enum):
     ARG = "arg"
     VAR = "var"
     NONE = "none"
+    THIS = "this"
 
 
 class Category(str, Enum):
@@ -56,8 +57,8 @@ class Verb(str, Enum):
 
 
 class Segment(str, Enum):
-    CONST = "const"
-    ARG = "arg"
+    CONSTANT = "constant"
+    ARGUMENT = "argument"
     LOCAL = "local"
     STATIC = "static"
     THIS = "this"
