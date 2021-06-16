@@ -11,6 +11,7 @@ from compiler.engine.compilation_engine import CompilationEngine
 from compiler.jack_tokenizer import JackTokenizer
 from compiler.symbol_table import SymbolTable
 from compiler.utils.constants import (
+    Command,
     Segment,
     SymbolKind,
     TokenType,
@@ -31,6 +32,12 @@ class VMCompilationEngine(CompilationEngine):
         self.writer = VMWriter(out_path=file_path.replace(".jack", ".vm"))
 
         self.class_name = "__undefined__"
+        self.label_count = 0
+
+    def _get_label(self, label: str):
+        new_label = f"{label}_{self.label_count}"
+        self.label_count += 1
+        return new_label
 
     def _append_with_indent(self, s: str):
         to_append = self._i(s)
@@ -51,16 +58,16 @@ class VMCompilationEngine(CompilationEngine):
     def _at_keyword(self, keywords: t.Iterable) -> bool:
         return self.jt.tokenType == TokenType.KEYWORD and self.jt.keyWord in keywords
 
-    def _append_and_advance_keyword(self, keywords: t.Iterable):
+    def _check_keyword_and_advance(self, keywords: t.Iterable):
         assert self._at_keyword(keywords=keywords)
-        self._append_and_advance()
+        self._advance()
 
     def _at_symbol(self, symbol: str) -> bool:
         return self.jt.tokenType == TokenType.SYMBOL and self.jt.symbol == symbol
 
-    def _append_and_advance_symbol(self, symbol: str):
+    def _check_symbol_and_advance(self, symbol: str):
         assert self._at_symbol(symbol=symbol)
-        self._append_and_advance()
+        self._advance()
 
     def _at_symbols(self, symbols: t.Iterable) -> bool:
         return self.jt.tokenType == TokenType.SYMBOL and self.jt.symbol in symbols
@@ -79,66 +86,16 @@ class VMCompilationEngine(CompilationEngine):
             self.jt.tokenType == TokenType.KEYWORD and self.jt.keyWord in allowed_types
         ) or self.jt.tokenType == TokenType.IDENTIFIER
 
-    def _append_and_advance_type(self, with_void: bool = False):
+    def _check_and_advance_type(self, with_void: bool = False):
         assert self._at_type(with_void=with_void)
-        self._append_and_advance()
+        self._advance()
 
     def _at_identifier(self) -> bool:
         return self.jt.tokenType == TokenType.IDENTIFIER
 
-    def _append_and_advance_identifier(self):
+    def _check_and_advance_identifier(self):
         assert self._at_identifier()
-        self._append_and_advance()
-
-    def _append_identifier_scope(
-        self,
-        category: Category,
-        verb: Verb,
-        advance: bool = True,
-        name: t.Optional[str] = None,
-    ):
-        assert self._at_identifier() or name is not None
-        name = name or self.jt.tkn
-        self._append(
-            s=self._build_identifier_tag(name=name, category=category, verb=verb),
-            advance=advance,
-        )
-
-    def _append_identifier_symbol(
-        self,
-        verb: Verb,
-        type: t.Optional[str] = None,
-        category: t.Optional[Category] = None,
-        advance: bool = True,
-        name: t.Optional[str] = None,
-    ):
-        assert self._at_identifier() or name is not None
-        name = name or self.jt.tkn
-        if verb == Verb.DEFINE:
-            self.st.define(name=name, type=type, kind=h.cat2kind(category))
-        elif verb == Verb.USE:
-            category = self.st.kindOf(name)
-        else:
-            raise ValueError(f"Unrecognized verb: {verb}")
-        index = self.st.indexOf(name)
-        self._append(
-            s=self._build_identifier_tag(
-                name=name, category=category, verb=verb, index=index
-            ),
-            advance=advance,
-        )
-
-    def _build_identifier_tag(
-        self, name: str, category: Category, verb: Verb, index: t.Optional[int] = None
-    ):
-        tag = "<identifier"
-        tag += f' category="{category}"'
-        tag += f' verb="{verb}"'
-        tag += f" index={index}" if index is not None else ""
-        tag += ">"
-        tag += f" {name}"
-        tag += " </identifier>"
-        return tag
+        self._advance()
 
     def _define_and_advance(
         self, type: str, kind: SymbolKind, name: t.Optional[str] = None
@@ -159,8 +116,7 @@ class VMCompilationEngine(CompilationEngine):
         self._advance()
 
         # '{'
-        assert self._at_symbol("{")
-        self._advance()
+        self._check_symbol_and_advance("{")
 
         # classVarDec*
         while self._at_keyword(keywords=(Keyword.STATIC, Keyword.FIELD)):
@@ -173,8 +129,7 @@ class VMCompilationEngine(CompilationEngine):
             self.compileSubroutine()
 
         # '}'
-        assert self._at_symbol("}")
-        self._advance()
+        self._check_symbol_and_advance("}")
 
     def compileClassVarDec(self):
         # ('static' | 'field')
@@ -218,15 +173,13 @@ class VMCompilationEngine(CompilationEngine):
         self._advance()
 
         # '('
-        assert self._at_symbol("(")
-        self._advance()
+        self._check_symbol_and_advance("(")
 
         # parameterList
         self.compileParameterList()
 
         # ')'
-        assert self._at_symbol(")")
-        self._advance()
+        self._check_symbol_and_advance(")")
 
         # subroutineBody
         self._compileSubroutineBody(
@@ -248,7 +201,7 @@ class VMCompilationEngine(CompilationEngine):
                 # ','
                 self._advance()
                 # type
-                assert self._at_identifier()
+                assert self._at_type(with_void=False)
                 type = self.jt.tkn
                 self._advance()
                 # varName
@@ -257,8 +210,7 @@ class VMCompilationEngine(CompilationEngine):
 
     def _compileSubroutineBody(self, subroutine_type: Keyword, function_name: str):
         # '{'
-        assert self._at_symbol("{")
-        self._advance()
+        self._check_symbol_and_advance("{")
 
         # varDec*
         nLocals = 0
@@ -284,8 +236,7 @@ class VMCompilationEngine(CompilationEngine):
         self.compileStatements()
 
         # '}'
-        assert self._at_symbol("}")
-        self._advance()
+        self._check_symbol_and_advance("}")
 
     def compileVarDec(self) -> int:
         count = 0
@@ -312,8 +263,7 @@ class VMCompilationEngine(CompilationEngine):
             count += 1
 
         # ';'
-        assert self._at_symbol(";")
-        self._advance()
+        self._check_symbol_and_advance(";")
 
         return count
 
@@ -331,8 +281,7 @@ class VMCompilationEngine(CompilationEngine):
             if keyword == Keyword.LET:
                 self.compileLet()
             elif keyword == Keyword.IF:
-                # self.compileIf()
-                raise NotImplementedError
+                self.compileIf()
             elif keyword == Keyword.WHILE:
                 self.compileWhile()
             elif keyword == Keyword.DO:
@@ -358,85 +307,95 @@ class VMCompilationEngine(CompilationEngine):
         if self._at_symbol("["):
             # TODO
             # '['
-            self._append_and_advance_symbol("[")
+            self._check_symbol_and_advance("[")
 
             # expression
             self.compileExpression()
 
             # ']'
-            self._append_and_advance_symbol("]")
+            self._check_symbol_and_advance("]")
 
         # '='
-        assert self._at_symbol("=")
-        self._advance()
+        self._check_symbol_and_advance("=")
 
         # expression
         self.compileExpression()
 
         # ';'
-        print(";;", self.jt.tkn)
-        assert self._at_symbol(";")
-        self._advance()
+        self._check_symbol_and_advance(";")
 
         # write assignment
         self.writer.writePop(segment=segment, index=index)
 
     def compileIf(self):
         # 'if'
-        self._append_and_advance_keyword(keywords=(Keyword.IF,))
+        assert self._at_keyword(keywords=(Keyword.IF,))
+        self._advance()
 
         # '('
-        self._append_and_advance_symbol("(")
+        self._check_symbol_and_advance("(")
 
         # expression
         self.compileExpression()
 
         # ')'
-        self._append_and_advance_symbol(")")
+        self._check_symbol_and_advance(")")
 
         # '{'
-        self._append_and_advance_symbol("{")
+        self._check_symbol_and_advance("{")
 
         # statements
         self.compileStatements()
 
         # '}'
-        self._append_and_advance_symbol("}")
+        self._check_symbol_and_advance("}")
 
         # ('else' '{' statements '}')?
         if self._at_keyword(keywords=(Keyword.ELSE,)):
             # 'else'
-            self._append_and_advance_keyword(keywords=(Keyword.ELSE,))
+            self._check_keyword_and_advance(keywords=(Keyword.ELSE,))
             # '{'
-            self._append_and_advance_symbol("{")
+            self._check_symbol_and_advance("{")
             # statements
             self.compileStatements()
             # '}'
-            self._append_and_advance_symbol("}")
+            self._check_symbol_and_advance("}")
 
     def compileWhile(self):
         # 'while'
         assert self._at_keyword(keywords=(Keyword.WHILE,))
-        # TODO: START HERE.
-        raise Exception("START HERE!!")
+        while_label = self._get_label(label=self.jt.keyWord)
+        self.writer.writeLabel(while_label)
+        self._advance()
 
         # '('
-        self._append_and_advance_symbol("(")
+        self._check_symbol_and_advance("(")
 
         # expression
         self.compileExpression()
 
         # ')'
-        self._append_and_advance_symbol(")")
+        self._check_symbol_and_advance(")")
+
+        # while branch
+        self.writer.writeArithmetic(Command.NOT)
+        end_while_label = self._get_label(label="end_while")
+        self.writer.writeIf(end_while_label)
 
         # '{'
-        self._append_and_advance_symbol("{")
+        self._check_symbol_and_advance("{")
 
         # statements
         self.compileStatements()
 
+        # while loop
+        self.writer.writeGoto(while_label)
+
         # '}'
-        self._append_and_advance_symbol("}")
+        self._check_symbol_and_advance("}")
+
+        # end while loop
+        self.writer.writeLabel(end_while_label)
 
     def compileDo(self):
         # 'do'
@@ -492,7 +451,7 @@ class VMCompilationEngine(CompilationEngine):
                 return
             self._advance()
             # '.'
-            self._append_and_advance_symbol(".")
+            self._check_symbol_and_advance(".")
             # subroutineName
             subroutine_name = self.jt.tkn
             self._append_identifier_scope(category=Category.SUBROUTINE, verb=Verb.USE)
@@ -511,8 +470,7 @@ class VMCompilationEngine(CompilationEngine):
             raise ValueError("Unrecognized syntax for subroutine call")
 
         # ';'
-        assert self._at_symbol(";")
-        self._advance()
+        self._check_symbol_and_advance(";")
         return
 
     def compileReturn(self):
@@ -525,8 +483,7 @@ class VMCompilationEngine(CompilationEngine):
             self.compileExpression()
 
         # ';'
-        assert self._at_symbol(";")
-        self._advance()
+        self._check_symbol_and_advance(";")
 
         # write return
         self.writer.writeReturn()
@@ -573,11 +530,11 @@ class VMCompilationEngine(CompilationEngine):
                     name=identifier, verb=Verb.USE, advance=False,
                 )
                 # '['
-                self._append_and_advance_symbol("[")
+                self._check_symbol_and_advance("[")
                 # expression
                 self.compileExpression()
                 # ']'
-                self._append_and_advance_symbol("]")
+                self._check_symbol_and_advance("]")
             elif self._at_symbol("("):  # subroutineName
                 class_name = self.class_name
                 subroutine_name = identifier
@@ -622,7 +579,7 @@ class VMCompilationEngine(CompilationEngine):
                     return
                 self._advance()
                 # '.'
-                self._append_and_advance_symbol(".")
+                self._check_symbol_and_advance(".")
                 # subroutineName
                 subroutine_name = self.jt.tkn
                 self._append_identifier_scope(
