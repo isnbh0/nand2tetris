@@ -6,13 +6,14 @@ if "compiler" in sys.path[0]:
     sys.path = [os.getcwd()] + sys.path
 import typing as t
 
-import compiler.utils.helpers as h
-from compiler.utils.constants import TokenType, Keyword, Category, Verb
+from compiler.engine.compilation_engine import CompilationEngine
 from compiler.jack_tokenizer import JackTokenizer
 from compiler.symbol_table import SymbolTable
+from compiler.utils.constants import TokenType, Keyword, Category, Verb
+import compiler.utils.helpers as h
 
 
-class CompilationEngine:
+class XmlCompilationEngine(CompilationEngine):
     """recursive top-down compilation engine"""
 
     def __init__(self, file_path):
@@ -34,8 +35,8 @@ class CompilationEngine:
         self.jt.advance()
 
     def _append(self, s=None, advance=False):
-        s = s or repr(self.jt)
-        self._append_with_indent(s=s)  # repr(self.jt))
+        s = s or self.jt.get_tag()
+        self._append_with_indent(s=s)
         if advance:
             self._advance()
 
@@ -219,9 +220,10 @@ class CompilationEngine:
         self._append_and_advance_symbol(")")
 
         # subroutineBody
-        self._append_with_indent("<subroutineBody>")
-        self.level += 1
+        self._compileSubroutineBody()
 
+    @bookend(keyword="subroutineBody")
+    def _compileSubroutineBody(self):
         # '{'
         self._append_and_advance_symbol("{")
 
@@ -234,10 +236,6 @@ class CompilationEngine:
 
         # '}'
         self._append_and_advance_symbol("}")
-
-        # end subroutineBody
-        self.level -= 1
-        self._append_with_indent("</subroutineBody>")
 
     @bookend(keyword="parameterList")
     def compileParameterList(self):

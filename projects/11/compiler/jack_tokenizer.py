@@ -48,18 +48,14 @@ class JackTokenizer:
         else:
             raise ValueError
 
-    def __repr__(self):
-        return JackTokenizer.get_tag(self.tkn, self.tokenType)
-
-    @staticmethod
-    def get_tag(tkn, tokenType):
-        if tokenType == TokenType.STRING_CONST:
-            tkn = tkn[1:-1]
-        elif tokenType == TokenType.SYMBOL:
-            tkn = h.escape_token(tkn)
+    def get_tag(self):
+        if self.tokenType == TokenType.STRING_CONST:
+            tkn = self.tkn[1:-1]
+        elif self.tokenType == TokenType.SYMBOL:
+            tkn = h.escape_token(self.tkn)
         else:
-            tkn = tkn
-        return f"<{tokenType}> {tkn} </{tokenType}>"
+            tkn = self.tkn
+        return f"<{self.tokenType}> {tkn} </{self.tokenType}>"
 
     @property
     def keyWord(self) -> Keyword:

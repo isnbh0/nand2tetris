@@ -53,3 +53,26 @@ class Category(str, Enum):
 class Verb(str, Enum):
     DEFINE = "define"
     USE = "use"
+
+
+class Segment(str, Enum):
+    CONST = "const"
+    ARG = "arg"
+    LOCAL = "local"
+    STATIC = "static"
+    THIS = "this"
+    THAT = "that"
+    POINTER = "pointer"
+    TEMP = "temp"
+
+
+class Command(str, Enum):
+    ADD = "add"
+    SUB = "sub"
+    NEG = "neg"
+    EQ = "eq"
+    GT = "gt"
+    LT = "lt"
+    AND = "and"
+    OR = "or"
+    NOT = "not"
