@@ -107,8 +107,7 @@ class VMCompilationEngine(CompilationEngine):
 
     def compileClass(self):
         # 'class'
-        assert self._at_keyword(keywords=(Keyword.CLASS,))
-        self._advance()
+        self._check_keyword_and_advance(keywords=(Keyword.CLASS,))
 
         # className
         assert self._at_identifier()
@@ -293,8 +292,7 @@ class VMCompilationEngine(CompilationEngine):
 
     def compileLet(self):
         # 'let'
-        assert self._at_keyword(keywords=(Keyword.LET,))
-        self._advance()
+        self._check_keyword_and_advance(keywords=(Keyword.LET,))
 
         # varName
         name = self.jt.tkn
@@ -329,8 +327,7 @@ class VMCompilationEngine(CompilationEngine):
 
     def compileIf(self):
         # 'if'
-        assert self._at_keyword(keywords=(Keyword.IF,))
-        self._advance()
+        self._check_keyword_and_advance(keywords=(Keyword.IF,))
 
         # '('
         self._check_symbol_and_advance("(")
@@ -399,8 +396,7 @@ class VMCompilationEngine(CompilationEngine):
 
     def compileDo(self):
         # 'do'
-        assert self._at_keyword(keywords=(Keyword.DO,))
-        self._advance()
+        self._check_keyword_and_advance(keywords=(Keyword.DO,))
 
         # subroutineCall
         # identifier
@@ -475,8 +471,7 @@ class VMCompilationEngine(CompilationEngine):
 
     def compileReturn(self):
         # 'return'
-        assert self._at_keyword(keywords=(Keyword.RETURN,))
-        self._advance()
+        self._check_keyword_and_advance(keywords=(Keyword.RETURN,))
 
         # expression?
         if not self._at_symbol(";"):
