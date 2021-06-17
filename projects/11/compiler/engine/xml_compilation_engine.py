@@ -577,7 +577,7 @@ class XmlCompilationEngine(CompilationEngine):
 
 
 def analyze_single_file(file_path):
-    ce = CompilationEngine(file_path=file_path)
+    ce = XmlCompilationEngine(file_path=file_path)
     try:
         ce.compileClass()
     except Exception as e:

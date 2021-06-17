@@ -10,7 +10,9 @@ from compiler.utils.constants import SymbolKind
 @dataclass
 class Entry:
     type: str
-    kind: t.Union[SymbolKind.STATIC, SymbolKind.FIELD, SymbolKind.ARG, SymbolKind.VAR]
+    kind: t.Union[
+        SymbolKind.STATIC, SymbolKind.FIELD, SymbolKind.ARGUMENT, SymbolKind.VAR
+    ]
     index: int = 0
 
 
@@ -20,10 +22,13 @@ class SymbolTable:
     def __init__(self):
         self.c: t.Dict[str, Entry] = dict()
         self.s: t.Dict[str, Entry] = dict()
-        self.tables = (self.s, self.c)
+
+    @property
+    def tables(self):
+        return (self.s, self.c)
 
     def startSubroutine(self):
-        self.s = []
+        self.s = dict()
 
     def _get_table(self, kind) -> t.List[Entry]:
         return self.c if kind in (SymbolKind.STATIC, SymbolKind.FIELD) else self.s
@@ -33,7 +38,7 @@ class SymbolTable:
         name: str,
         type: str,
         kind: t.Union[
-            SymbolKind.STATIC, SymbolKind.FIELD, SymbolKind.ARG, SymbolKind.VAR
+            SymbolKind.STATIC, SymbolKind.FIELD, SymbolKind.ARGUMENT, SymbolKind.VAR
         ],
     ):
         table = self._get_table(kind)
@@ -49,7 +54,7 @@ class SymbolTable:
             if name in table:
                 entry = table[name]
                 return getattr(entry, attr)
-        raise ValueError("Symbol not found.")
+        raise ValueError(f"Symbol not found: {name}")
 
     def kindOf(self, name: str) -> SymbolKind:
         return self._get_attribute(name=name, attr="kind")

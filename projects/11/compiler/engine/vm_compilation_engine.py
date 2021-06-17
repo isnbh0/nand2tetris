@@ -26,12 +26,15 @@ from compiler.vm_writer import VMWriter
 class VMCompilationEngine(CompilationEngine):
     """recursive top-down compilation engine"""
 
+    __DEFAULT_STATE = "__undefined__"
+
     def __init__(self, file_path):
         self.jt = JackTokenizer(file_path=file_path)
         self.st = SymbolTable()
         self.writer = VMWriter(out_path=file_path.replace(".jack", ".vm"))
 
-        self.class_name = "__undefined__"
+        self.class_name = self.__DEFAULT_STATE
+        self.subroutine_return_type = self.__DEFAULT_STATE
         self.label_count = 0
 
     def _get_label(self, label: str):
@@ -39,21 +42,8 @@ class VMCompilationEngine(CompilationEngine):
         self.label_count += 1
         return new_label
 
-    def _append_with_indent(self, s: str):
-        to_append = self._i(s)
-        self.output.append(to_append)
-
     def _advance(self):
         self.jt.advance()
-
-    def _append(self, s=None, advance=False):
-        s = s or self.jt.get_tag()
-        self._append_with_indent(s=s)
-        if advance:
-            self._advance()
-
-    def _append_and_advance(self, s=None):
-        self._append(s=s, advance=True)
 
     def _at_keyword(self, keywords: t.Iterable) -> bool:
         return self.jt.tokenType == TokenType.KEYWORD and self.jt.keyWord in keywords
@@ -100,8 +90,9 @@ class VMCompilationEngine(CompilationEngine):
     def _define_and_advance(
         self, type: str, kind: SymbolKind, name: t.Optional[str] = None
     ):
-        assert self._at_identifier()
-        name = name or self.jt.tkn
+        if name is None:
+            assert self._at_identifier()
+            name = self.jt.tkn
         self.st.define(name=name, type=type, kind=kind)
         self._advance()
 
@@ -155,15 +146,24 @@ class VMCompilationEngine(CompilationEngine):
         self._advance()
 
     def compileSubroutine(self):
+        # reset subroutine symbol table
+        self.st.startSubroutine()
+
         # ('constructor' | 'function' | 'method')
         assert self._at_keyword(
             keywords=(Keyword.CONSTRUCTOR, Keyword.FUNCTION, Keyword.METHOD)
         )
         subroutine_type = self.jt.tkn
-        self._advance()
+        if self._at_keyword(keywords=(Keyword.METHOD,)):
+            self._define_and_advance(
+                name=Keyword.THIS, type=self.class_name, kind=SymbolKind.ARGUMENT
+            )
+        else:
+            self._advance()
 
         # ('void' | type)
         assert self._at_type(with_void=True)
+        self.subroutine_return_type = self.jt.tkn
         self._advance()
 
         # subroutineName
@@ -193,7 +193,7 @@ class VMCompilationEngine(CompilationEngine):
             type = self.jt.tkn
             self._advance()
             # varName
-            kind = SymbolKind.ARG
+            kind = SymbolKind.ARGUMENT
             self._define_and_advance(type=type, kind=kind)
             # (',' type varName)*
             while self._at_symbol(","):
@@ -204,7 +204,7 @@ class VMCompilationEngine(CompilationEngine):
                 type = self.jt.tkn
                 self._advance()
                 # varName
-                kind = SymbolKind.ARG
+                kind = SymbolKind.ARGUMENT
                 self._define_and_advance(type=type, kind=kind)
 
     def _compileSubroutineBody(self, subroutine_type: Keyword, function_name: str):
@@ -225,7 +225,6 @@ class VMCompilationEngine(CompilationEngine):
         elif subroutine_type == Keyword.FUNCTION:
             pass
         elif subroutine_type == Keyword.METHOD:
-            # write code to set "this" to passed object
             # push argument 0
             self.writer.writePush(segment=Segment.ARGUMENT, index=0)
             # pop pointer 0
@@ -326,6 +325,9 @@ class VMCompilationEngine(CompilationEngine):
         self.writer.writePop(segment=segment, index=index)
 
     def compileIf(self):
+        ELSE = "else"
+        END_IF = "end_if"
+
         # 'if'
         self._check_keyword_and_advance(keywords=(Keyword.IF,))
 
@@ -338,6 +340,11 @@ class VMCompilationEngine(CompilationEngine):
         # ')'
         self._check_symbol_and_advance(")")
 
+        # if false, goto else label. otherwise continue
+        self.writer.writeArithmetic(Command.NOT)
+        else_label = self._get_label(label=ELSE)
+        self.writer.writeIf(else_label)
+
         # '{'
         self._check_symbol_and_advance("{")
 
@@ -346,6 +353,13 @@ class VMCompilationEngine(CompilationEngine):
 
         # '}'
         self._check_symbol_and_advance("}")
+
+        # goto end if label
+        end_if_label = self._get_label(label=END_IF)
+        self.writer.writeGoto(end_if_label)
+
+        # if false label
+        self.writer.writeLabel(else_label)
 
         # ('else' '{' statements '}')?
         if self._at_keyword(keywords=(Keyword.ELSE,)):
@@ -357,6 +371,9 @@ class VMCompilationEngine(CompilationEngine):
             self.compileStatements()
             # '}'
             self._check_symbol_and_advance("}")
+
+        # end if label
+        self.writer.writeLabel(label=end_if_label)
 
     def compileWhile(self):
         # 'while'
@@ -444,6 +461,8 @@ class VMCompilationEngine(CompilationEngine):
                 self.writer.writeCall(
                     name=f"{class_name}.{subroutine_name}", nArgs=nArgs
                 )
+                # pop and ignore result
+                self.writer.writePop(segment=Segment.TEMP, index=0)
                 return
             self._advance()
             # '.'
@@ -465,6 +484,9 @@ class VMCompilationEngine(CompilationEngine):
         else:
             raise ValueError("Unrecognized syntax for subroutine call")
 
+        # pop and ignore result
+        self.writer.writePop(segment=Segment.TEMP, index=0)
+
         # ';'
         self._check_symbol_and_advance(";")
         return
@@ -476,6 +498,10 @@ class VMCompilationEngine(CompilationEngine):
         # expression?
         if not self._at_symbol(";"):
             self.compileExpression()
+        else:
+            # void
+            assert self.subroutine_return_type == Keyword.VOID
+            self.writer.writePush(segment=Segment.CONSTANT, index=0)
 
         # ';'
         self._check_symbol_and_advance(";")

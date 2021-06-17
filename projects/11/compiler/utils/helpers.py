@@ -74,7 +74,7 @@ def is_symbol(category: Category) -> bool:
 def cat2kind(category: Category) -> SymbolKind:
     map_ = {
         Category.VAR: SymbolKind.VAR,
-        Category.ARGUMENT: SymbolKind.ARG,
+        Category.ARGUMENT: SymbolKind.ARGUMENT,
         Category.STATIC: SymbolKind.STATIC,
         Category.FIELD: SymbolKind.FIELD,
     }
@@ -106,6 +106,8 @@ def kind2segment(kind: SymbolKind):
         segment = Segment.THIS
     elif kind == SymbolKind.VAR:
         segment = Segment.LOCAL
+    elif kind == SymbolKind.ARGUMENT:
+        segment = Segment.ARGUMENT
     else:
         segment = kind
     return segment

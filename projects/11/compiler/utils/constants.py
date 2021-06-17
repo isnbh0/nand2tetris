@@ -36,7 +36,7 @@ class Keyword(str, Enum):
 class SymbolKind(str, Enum):
     STATIC = "static"
     FIELD = "field"
-    ARG = "arg"
+    ARGUMENT = "argument"
     VAR = "var"
     NONE = "none"
     THIS = "this"
