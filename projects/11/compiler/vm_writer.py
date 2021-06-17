@@ -64,7 +64,7 @@ class VMWriter:
             self.writePush(segment=Segment.CONSTANT, index=1)
             self.writeArithmetic(command="neg")
         elif keyword == Keyword.THIS:
-            raise NotImplementedError
+            self.writePush(segment=Segment.POINTER, index=0)
 
 
 # TODO: delete later

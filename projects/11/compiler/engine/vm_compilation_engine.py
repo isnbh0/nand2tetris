@@ -35,6 +35,7 @@ class VMCompilationEngine(CompilationEngine):
 
         self.class_name = self.__DEFAULT_STATE
         self.subroutine_return_type = self.__DEFAULT_STATE
+        self.class_field_count = 0
         self.label_count = 0
 
     def _get_label(self, label: str):
@@ -83,7 +84,7 @@ class VMCompilationEngine(CompilationEngine):
     def _at_identifier(self) -> bool:
         return self.jt.tokenType == TokenType.IDENTIFIER
 
-    def _check_and_advance_identifier(self):
+    def _check_identifier_and_advance(self):
         assert self._at_identifier()
         self._advance()
 
@@ -94,6 +95,8 @@ class VMCompilationEngine(CompilationEngine):
             assert self._at_identifier()
             name = self.jt.tkn
         self.st.define(name=name, type=type, kind=kind)
+        if kind == SymbolKind.FIELD:
+            self.class_field_count += 1
         self._advance()
 
     def compileClass(self):
@@ -109,6 +112,7 @@ class VMCompilationEngine(CompilationEngine):
         self._check_symbol_and_advance("{")
 
         # classVarDec*
+        self.class_field_count = 0
         while self._at_keyword(keywords=(Keyword.STATIC, Keyword.FIELD)):
             self.compileClassVarDec()
 
@@ -185,6 +189,9 @@ class VMCompilationEngine(CompilationEngine):
             subroutine_type=subroutine_type, function_name=function_name
         )
 
+        # reset subroutine return type
+        self.subroutine_return_type = self.__DEFAULT_STATE
+
     def compileParameterList(self):
         # ((type varName) (',' type varName)*)?
         if self._at_type():
@@ -221,7 +228,14 @@ class VMCompilationEngine(CompilationEngine):
         self.writer.writeFunction(name=name, nLocals=nLocals)
 
         if subroutine_type == Keyword.CONSTRUCTOR:
-            raise NotImplementedError
+            # push class_field_count
+            self.writer.writePush(
+                segment=Segment.CONSTANT, index=self.class_field_count
+            )
+            # call Memory.alloc
+            self.writer.writeCall(name="Memory.alloc", nArgs=1)
+            # pop pointer 0
+            self.writer.writePop(segment=Segment.POINTER, index=0)
         elif subroutine_type == Keyword.FUNCTION:
             pass
         elif subroutine_type == Keyword.METHOD:
@@ -421,10 +435,12 @@ class VMCompilationEngine(CompilationEngine):
         identifier = self.jt.tkn
         self._advance()
 
-        if self._at_symbol("("):  # subroutineName
+        if self._at_symbol("("):  # subroutineName -- METHOD
             # '('
             assert self._at_symbol("(")
             self._advance()
+            # push this
+            self.writer.writePush(segment=Segment.POINTER, index=0)
             # expressionList, will have pushed expressions
             nArgs = self.compileExpressionList()
             # ')'
@@ -432,7 +448,9 @@ class VMCompilationEngine(CompilationEngine):
             self._advance()
 
             # call subroutine with number of expressions
-            self.writer.writeCall(name=identifier, nArgs=nArgs)
+            self.writer.writeCall(
+                name=f"{self.class_name}.{identifier}", nArgs=nArgs + 1
+            )
         elif self._at_symbol("."):  # (className | varName)
             try:
                 # try to use varName
@@ -464,22 +482,24 @@ class VMCompilationEngine(CompilationEngine):
                 # pop and ignore result
                 self.writer.writePop(segment=Segment.TEMP, index=0)
                 return
-            self._advance()
+            # save segment info for call later
+            kind = self.st.kindOf(name=identifier)
+            index = self.st.indexOf(name=identifier)
+            segment = h.kind2segment(kind=kind)
             # '.'
             self._check_symbol_and_advance(".")
             # subroutineName
             subroutine_name = self.jt.tkn
-            self._append_identifier_scope(category=Category.SUBROUTINE, verb=Verb.USE)
+            self._check_identifier_and_advance()
             # '('
-            assert self._at_symbol("(")
-            self._advance()
+            self._check_symbol_and_advance("(")
             # expressionList
             nArgs = self.compileExpressionList()
             # ')'
-            assert self._at_symbol(")")
-            self._advance()
+            self._check_symbol_and_advance(")")
 
-            # call subroutine
+            # call method subroutine
+            self.writer.writePush(segment=segment, index=index)
             self.writer.writeCall(name=f"{type}.{subroutine_name}", nArgs=nArgs + 1)
         else:
             raise ValueError("Unrecognized syntax for subroutine call")
@@ -679,6 +699,8 @@ if __name__ == "__main__":
     path = args.path
 
     if os.path.isdir(path):
-        raise ValueError("Only supports file-level analysis")
+        for file in (f for f in os.listdir(path) if f.endswith(".jack")):
+            print(os.path.join(path, file))
+            analyze_single_file(file_path=os.path.join(path, file))
     else:
         analyze_single_file(file_path=path)
