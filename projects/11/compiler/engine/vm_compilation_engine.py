@@ -316,7 +316,9 @@ class VMCompilationEngine(CompilationEngine):
 
         # ('[' expression ']')?
         if self._at_symbol("["):
-            # TODO
+            # TODO: fix
+            self.writer.writePush(segment=segment, index=index)
+
             # '['
             self._check_symbol_and_advance("[")
 
@@ -326,6 +328,31 @@ class VMCompilationEngine(CompilationEngine):
             # ']'
             self._check_symbol_and_advance("]")
 
+            # Get offset address
+            self.writer.writeArithmetic(command=Command.ADD)
+            # # Set offset address to THAT
+            #self.writer.writePop(segment=Segment.POINTER, index=1)
+
+            ## Set segment and index for assignment below
+            #segment, index = Segment.THAT, 0
+
+            # '='
+            self._check_symbol_and_advance("=")
+            # expression
+            self.compileExpression()
+            # ';'
+            self._check_symbol_and_advance(";")
+
+            ### Safe assignment handling
+            # Pop RHS value to temp
+            self.writer.writePop(segment=Segment.TEMP, index=0)
+            # Pop LHS address to pointer 1
+            self.writer.writePop(segment=Segment.POINTER, index=1)
+            # Push temp value back to stack
+            self.writer.writePush(segment=Segment.TEMP, index=0)
+            # write assignment
+            self.writer.writePop(segment=Segment.THAT, index=0)
+            return
         # '='
         self._check_symbol_and_advance("=")
 
@@ -486,6 +513,8 @@ class VMCompilationEngine(CompilationEngine):
             kind = self.st.kindOf(name=identifier)
             index = self.st.indexOf(name=identifier)
             segment = h.kind2segment(kind=kind)
+            # push object this
+            self.writer.writePush(segment=segment, index=index)
             # '.'
             self._check_symbol_and_advance(".")
             # subroutineName
@@ -499,7 +528,6 @@ class VMCompilationEngine(CompilationEngine):
             self._check_symbol_and_advance(")")
 
             # call method subroutine
-            self.writer.writePush(segment=segment, index=index)
             self.writer.writeCall(name=f"{type}.{subroutine_name}", nArgs=nArgs + 1)
         else:
             raise ValueError("Unrecognized syntax for subroutine call")
@@ -550,7 +578,16 @@ class VMCompilationEngine(CompilationEngine):
             self.writer.writePush(segment=Segment.CONSTANT, index=self.jt.tkn)
             self._advance()
         elif token_type == TokenType.STRING_CONST:
-            # TODO
+            # TODO: fix
+            token = self.jt.tkn.strip('"')
+            # Init String
+            self.writer.writePush(segment=Segment.CONSTANT, index=len(token))
+            self.writer.writeCall(name="String.new", nArgs=1)
+            # Write String
+            for char in token:
+                # push char
+                self.writer.writePush(segment=Segment.CONSTANT, index=ord(char))
+                self.writer.writeCall(name="String.appendChar", nArgs=2)
             self._advance()
         elif token_type == TokenType.KEYWORD:
             assert self.jt.keyWord in (
@@ -566,16 +603,28 @@ class VMCompilationEngine(CompilationEngine):
             identifier = self.jt.tkn
             self._advance()
             if self._at_symbol("["):  # varName
-                # TODO
-                self._append_identifier_symbol(
-                    name=identifier, verb=Verb.USE, advance=False,
-                )
+                # TODO: fix
+                # varName
+                name = identifier
+                index = self.st.indexOf(name=name)
+                kind = self.st.kindOf(name=name)
+                segment = h.kind2segment(kind)
+
+                self.writer.writePush(segment=segment, index=index)
+
                 # '['
                 self._check_symbol_and_advance("[")
                 # expression
                 self.compileExpression()
                 # ']'
                 self._check_symbol_and_advance("]")
+
+                # get offset address
+                self.writer.writeArithmetic(command=Command.ADD)
+                # Set to THAT
+                self.writer.writePop(segment=Segment.POINTER, index=1)
+                # Push THAT to stack
+                self.writer.writePush(segment=Segment.THAT, index=0)
             elif self._at_symbol("("):  # subroutineName
                 class_name = self.class_name
                 subroutine_name = identifier
@@ -618,14 +667,14 @@ class VMCompilationEngine(CompilationEngine):
                         name=f"{class_name}.{subroutine_name}", nArgs=nArgs
                     )
                     return
-                self._advance()
-                # '.'
+                # Push object for method call
+                index = self.st.indexOf(name=identifier)
+                self.writer.writePush(segment=Segment.THIS, index=index)
+                # Advance .
                 self._check_symbol_and_advance(".")
                 # subroutineName
                 subroutine_name = self.jt.tkn
-                self._append_identifier_scope(
-                    category=Category.SUBROUTINE, verb=Verb.USE
-                )
+                self._advance()
                 # '('
                 assert self._at_symbol("(")
                 self._advance()

@@ -17,11 +17,16 @@ def is_generator_empty(generator):
 
 token_dict = {
     "keyword": (
-        r"class|constructor|function|"
-        r"method|field|static|var|"
-        r"int|char|boolean|void|true|"
-        r"false|null|this|let|do|"
-        r"if|else|while|return"
+        r"class(?!\w)|constructor(?!\w)|function(?!\w)|"
+        r"method(?!\w)|field(?!\w)|static(?!\w)|var(?!\w)|"
+        r"int(?!\w)|char(?!\w)|boolean(?!\w)|void(?!\w)|true(?!\w)|"
+        r"false(?!\w)|null(?!\w)|this(?!\w)|let(?!\w)|do(?!\w)|"
+        r"if(?!\w)|else(?!\w)|while(?!\w)|return(?!\w)"
+        # r"class|constructor|function|"
+        # r"method|field|static|var|"
+        # r"int|char|boolean|void|true|"
+        # r"false|null|this|let|do|"
+        # r"if|else|while|return"
     ),
     "symbol": (r"\{|\}|\(|\)|\[|\]|\.|" r",|;|\+|\-|\*|/|&|" r"\||<|>|=|~"),
     "integerConstant": (
