@@ -1,9 +1,7 @@
 import itertools
 import re
-import typing as t
 
-from compiler.utils.constants import Category, SymbolKind, Keyword, Segment
-from compiler.vm_writer import VMWriter
+from compiler.utils.constants import Category, Segment, SymbolKind
 
 
 def is_generator_empty(generator):

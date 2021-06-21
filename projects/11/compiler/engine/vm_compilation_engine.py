@@ -1,6 +1,4 @@
-import argparse
 import os
-from re import sub
 import sys
 
 if "compiler" in sys.path[0]:
@@ -16,8 +14,6 @@ from compiler.utils.constants import (
     SymbolKind,
     TokenType,
     Keyword,
-    Category,
-    Verb,
 )
 import compiler.utils.helpers as h
 from compiler.vm_writer import VMWriter
@@ -31,42 +27,48 @@ class VMCompilationEngine(CompilationEngine):
     def __init__(self, file_path):
         self.jt = JackTokenizer(file_path=file_path)
         self.st = SymbolTable()
-        self.writer = VMWriter(out_path=file_path.replace(".jack", ".vm"))
+        self.out_path_ = file_path.replace(".jack", ".vm")
+        self.writer = VMWriter(out_path=self.out_path_)
 
         self.class_name = self.__DEFAULT_STATE
         self.subroutine_return_type = self.__DEFAULT_STATE
         self.class_field_count = 0
         self.label_count = 0
 
+    @property
+    def current_token(self):
+        return self.jt.tkn
+
     def _get_label(self, label: str):
         new_label = f"{label}_{self.label_count}"
         self.label_count += 1
         return new_label
 
-    def _advance(self):
+    def _advance(self) -> str:
+        old = self.jt.tkn
         self.jt.advance()
+        return old
 
     def _at_keyword(self, keywords: t.Iterable) -> bool:
         return self.jt.tokenType == TokenType.KEYWORD and self.jt.keyWord in keywords
 
-    def _check_keyword_and_advance(self, keywords: t.Iterable):
+    def _check_keyword_and_advance(self, keywords: t.Iterable) -> str:
         assert self._at_keyword(keywords=keywords)
-        self._advance()
+        return self._advance()
 
     def _at_symbol(self, symbol: str) -> bool:
         return self.jt.tokenType == TokenType.SYMBOL and self.jt.symbol == symbol
 
-    def _check_symbol_and_advance(self, symbol: str):
+    def _check_symbol_and_advance(self, symbol: str) -> str:
         assert self._at_symbol(symbol=symbol)
-        self._advance()
+        return self._advance()
 
     def _at_symbols(self, symbols: t.Iterable) -> bool:
         return self.jt.tokenType == TokenType.SYMBOL and self.jt.symbol in symbols
 
-    def _append_and_advance_symbols(self, symbols: t.Iterable):
-        """Quick hack to handle unaryOp"""
+    def _check_symbols_and_advance(self, symbols: t.Iterable) -> str:
         assert self._at_symbols(symbols=symbols)
-        self._append_and_advance()
+        return self._advance()
 
     def _at_type(self, with_void: bool = False) -> bool:
         if with_void:
@@ -77,23 +79,23 @@ class VMCompilationEngine(CompilationEngine):
             self.jt.tokenType == TokenType.KEYWORD and self.jt.keyWord in allowed_types
         ) or self.jt.tokenType == TokenType.IDENTIFIER
 
-    def _check_and_advance_type(self, with_void: bool = False):
+    def _check_type_and_advance(self, with_void: bool = False) -> str:
         assert self._at_type(with_void=with_void)
-        self._advance()
+        return self._advance()
 
     def _at_identifier(self) -> bool:
         return self.jt.tokenType == TokenType.IDENTIFIER
 
-    def _check_identifier_and_advance(self):
+    def _check_identifier_and_advance(self) -> str:
         assert self._at_identifier()
-        self._advance()
+        return self._advance()
 
-    def _define_and_advance(
+    def _define_variable_and_advance(
         self, type: str, kind: SymbolKind, name: t.Optional[str] = None
     ):
         if name is None:
             assert self._at_identifier()
-            name = self.jt.tkn
+            name = self.current_token
         self.st.define(name=name, type=type, kind=kind)
         if kind == SymbolKind.FIELD:
             self.class_field_count += 1
@@ -104,9 +106,7 @@ class VMCompilationEngine(CompilationEngine):
         self._check_keyword_and_advance(keywords=(Keyword.CLASS,))
 
         # className
-        assert self._at_identifier()
-        self.class_name = self.jt.tkn
-        self._advance()
+        self.class_name = self._check_identifier_and_advance()
 
         # '{'
         self._check_symbol_and_advance("{")
@@ -127,24 +127,21 @@ class VMCompilationEngine(CompilationEngine):
 
     def compileClassVarDec(self):
         # ('static' | 'field')
-        assert self._at_keyword(keywords=(Keyword.STATIC, Keyword.FIELD))
-        kind = h.cat2kind(self.jt.tkn)
-        self._advance()
+        cat = self._check_keyword_and_advance(keywords=(Keyword.STATIC, Keyword.FIELD))
+        kind = h.cat2kind(cat)
 
         # type
-        assert self._at_type(with_void=False)
-        type = self.jt.tkn
-        self._advance()
+        type = self._check_type_and_advance(with_void=False)
 
         # varName
-        self._define_and_advance(type=type, kind=kind)
+        self._define_variable_and_advance(type=type, kind=kind)
 
         # (',' varName)*
         while self._at_symbol(","):
             # ','
             self._advance()
             # varName
-            self._define_and_advance(type=type, kind=kind)
+            self._define_variable_and_advance(type=type, kind=kind)
 
         # ';'
         self._advance()
@@ -157,23 +154,19 @@ class VMCompilationEngine(CompilationEngine):
         assert self._at_keyword(
             keywords=(Keyword.CONSTRUCTOR, Keyword.FUNCTION, Keyword.METHOD)
         )
-        subroutine_type = self.jt.tkn
+        subroutine_type = self.current_token
         if self._at_keyword(keywords=(Keyword.METHOD,)):
-            self._define_and_advance(
+            self._define_variable_and_advance(
                 name=Keyword.THIS, type=self.class_name, kind=SymbolKind.ARGUMENT
             )
         else:
             self._advance()
 
         # ('void' | type)
-        assert self._at_type(with_void=True)
-        self.subroutine_return_type = self.jt.tkn
-        self._advance()
+        self.subroutine_return_type = self._check_type_and_advance(with_void=True)
 
         # subroutineName
-        assert self._at_identifier()
-        function_name = self.jt.tkn
-        self._advance()
+        function_name = self._check_identifier_and_advance()
 
         # '('
         self._check_symbol_and_advance("(")
@@ -196,23 +189,17 @@ class VMCompilationEngine(CompilationEngine):
         # ((type varName) (',' type varName)*)?
         if self._at_type():
             # type
-            assert self._at_type(with_void=False)
-            type = self.jt.tkn
-            self._advance()
+            type = self._check_type_and_advance(with_void=False)
             # varName
-            kind = SymbolKind.ARGUMENT
-            self._define_and_advance(type=type, kind=kind)
+            self._define_variable_and_advance(type=type, kind=SymbolKind.ARGUMENT)
             # (',' type varName)*
             while self._at_symbol(","):
                 # ','
                 self._advance()
                 # type
-                assert self._at_type(with_void=False)
-                type = self.jt.tkn
-                self._advance()
+                type = self._check_type_and_advance(with_void=False)
                 # varName
-                kind = SymbolKind.ARGUMENT
-                self._define_and_advance(type=type, kind=kind)
+                self._define_variable_and_advance(type=type, kind=SymbolKind.ARGUMENT)
 
     def _compileSubroutineBody(self, subroutine_type: Keyword, function_name: str):
         # '{'
@@ -253,17 +240,14 @@ class VMCompilationEngine(CompilationEngine):
     def compileVarDec(self) -> int:
         count = 0
         # 'var'
-        assert self._at_keyword(keywords=(Keyword.VAR,))
-        kind = h.cat2kind(self.jt.tkn)
-        self._advance()
+        cat = self._check_keyword_and_advance(keywords=(Keyword.VAR,))
+        kind = h.cat2kind(cat)
 
         # type
-        assert self._at_type(with_void=False)
-        type = self.jt.tkn
-        self._advance()
+        type = self._check_type_and_advance(with_void=False)
 
         # varName
-        self._define_and_advance(type=type, kind=kind)
+        self._define_variable_and_advance(type=type, kind=kind)
         count += 1
 
         # (',' varName)*
@@ -271,7 +255,7 @@ class VMCompilationEngine(CompilationEngine):
             # ','
             self._advance()
             # varName
-            self._define_and_advance(type=type, kind=kind)
+            self._define_variable_and_advance(type=type, kind=kind)
             count += 1
 
         # ';'
@@ -308,15 +292,13 @@ class VMCompilationEngine(CompilationEngine):
         self._check_keyword_and_advance(keywords=(Keyword.LET,))
 
         # varName
-        name = self.jt.tkn
-        kind = self.st.kindOf(name=name)
+        name = self._advance()
+        segment = h.kind2segment(self.st.kindOf(name=name))
         index = self.st.indexOf(name=name)
-        segment = h.kind2segment(kind)
-        self._advance()
 
         # ('[' expression ']')?
         if self._at_symbol("["):
-            # TODO: fix
+            # push varName value
             self.writer.writePush(segment=segment, index=index)
 
             # '['
@@ -330,20 +312,17 @@ class VMCompilationEngine(CompilationEngine):
 
             # Get offset address
             self.writer.writeArithmetic(command=Command.ADD)
-            # # Set offset address to THAT
-            #self.writer.writePop(segment=Segment.POINTER, index=1)
-
-            ## Set segment and index for assignment below
-            #segment, index = Segment.THAT, 0
 
             # '='
             self._check_symbol_and_advance("=")
+
             # expression
             self.compileExpression()
+
             # ';'
             self._check_symbol_and_advance(";")
 
-            ### Safe assignment handling
+            # Safe assignment handling
             # Pop RHS value to temp
             self.writer.writePop(segment=Segment.TEMP, index=0)
             # Pop LHS address to pointer 1
@@ -418,10 +397,9 @@ class VMCompilationEngine(CompilationEngine):
 
     def compileWhile(self):
         # 'while'
-        assert self._at_keyword(keywords=(Keyword.WHILE,))
-        while_label = self._get_label(label=self.jt.keyWord)
+        keyword = self._check_keyword_and_advance(keywords=(Keyword.WHILE,))
+        while_label = self._get_label(label=keyword)
         self.writer.writeLabel(while_label)
-        self._advance()
 
         # '('
         self._check_symbol_and_advance("(")
@@ -458,21 +436,17 @@ class VMCompilationEngine(CompilationEngine):
 
         # subroutineCall
         # identifier
-        assert self._at_identifier()
-        identifier = self.jt.tkn
-        self._advance()
+        identifier = self._check_identifier_and_advance()
 
         if self._at_symbol("("):  # subroutineName -- METHOD
             # '('
-            assert self._at_symbol("(")
-            self._advance()
+            self._check_symbol_and_advance("(")
             # push this
             self.writer.writePush(segment=Segment.POINTER, index=0)
             # expressionList, will have pushed expressions
             nArgs = self.compileExpressionList()
             # ')'
-            assert self._at_symbol(")")
-            self._advance()
+            self._check_symbol_and_advance(")")
 
             # call subroutine with number of expressions
             self.writer.writeCall(
@@ -483,25 +457,20 @@ class VMCompilationEngine(CompilationEngine):
                 # try to use varName
                 type = self.st.typeOf(name=identifier)
             except ValueError:
-                # no var found: do className
+                # no var found: do className - routine is function or constructor
                 class_name = identifier
                 # '.'
-                assert self._at_symbol(".")
-                self._advance()
+                self._check_symbol_and_advance(".")
                 # subroutineName
-                subroutine_name = self.jt.tkn
-                self._advance()
+                subroutine_name = self._check_identifier_and_advance()
                 # '('
-                assert self._at_symbol("(")
-                self._advance()
+                self._check_symbol_and_advance("(")
                 # expressionList
                 nArgs = self.compileExpressionList()
                 # ')'
-                assert self._at_symbol(")")
-                self._advance()
+                self._check_symbol_and_advance(")")
                 # ';'
-                assert self._at_symbol(";")
-                self._advance()
+                self._check_symbol_and_advance(";")
                 # call subroutine
                 self.writer.writeCall(
                     name=f"{class_name}.{subroutine_name}", nArgs=nArgs
@@ -510,16 +479,14 @@ class VMCompilationEngine(CompilationEngine):
                 self.writer.writePop(segment=Segment.TEMP, index=0)
                 return
             # save segment info for call later
-            kind = self.st.kindOf(name=identifier)
+            segment = h.kind2segment(kind=self.st.kindOf(name=identifier))
             index = self.st.indexOf(name=identifier)
-            segment = h.kind2segment(kind=kind)
-            # push object this
+            # push this object
             self.writer.writePush(segment=segment, index=index)
             # '.'
             self._check_symbol_and_advance(".")
             # subroutineName
-            subroutine_name = self.jt.tkn
-            self._check_identifier_and_advance()
+            subroutine_name = self._check_identifier_and_advance()
             # '('
             self._check_symbol_and_advance("(")
             # expressionList
@@ -564,8 +531,7 @@ class VMCompilationEngine(CompilationEngine):
         # (op term)*
         while self._at_symbols(symbols=h.binops):
             # op
-            op = self.jt.tkn
-            self._advance()
+            op = self._check_symbols_and_advance(symbols=h.binops)
             # term - writes vm commands
             self.compileTerm()
 
@@ -575,11 +541,10 @@ class VMCompilationEngine(CompilationEngine):
     def compileTerm(self):
         token_type = self.jt.tokenType
         if token_type == TokenType.INT_CONST:
-            self.writer.writePush(segment=Segment.CONSTANT, index=self.jt.tkn)
+            self.writer.writePush(segment=Segment.CONSTANT, index=self.current_token)
             self._advance()
         elif token_type == TokenType.STRING_CONST:
-            # TODO: fix
-            token = self.jt.tkn.strip('"')
+            token = self.current_token.strip('"')
             # Init String
             self.writer.writePush(segment=Segment.CONSTANT, index=len(token))
             self.writer.writeCall(name="String.new", nArgs=1)
@@ -590,26 +555,18 @@ class VMCompilationEngine(CompilationEngine):
                 self.writer.writeCall(name="String.appendChar", nArgs=2)
             self._advance()
         elif token_type == TokenType.KEYWORD:
-            assert self.jt.keyWord in (
-                Keyword.TRUE,
-                Keyword.FALSE,
-                Keyword.NULL,
-                Keyword.THIS,
+            keyword = self._check_keyword_and_advance(
+                keywords=(Keyword.TRUE, Keyword.FALSE, Keyword.NULL, Keyword.THIS,)
             )
-            self.writer.compile_constant(self.jt.keyWord)
-            self._advance()
+            self.writer.compile_constant(keyword)
         elif token_type == TokenType.IDENTIFIER:
             # identifier
-            identifier = self.jt.tkn
-            self._advance()
+            identifier = self._check_identifier_and_advance()
             if self._at_symbol("["):  # varName
-                # TODO: fix
                 # varName
                 name = identifier
+                segment = h.kind2segment(self.st.kindOf(name=name))
                 index = self.st.indexOf(name=name)
-                kind = self.st.kindOf(name=name)
-                segment = h.kind2segment(kind)
-
                 self.writer.writePush(segment=segment, index=index)
 
                 # '['
@@ -629,15 +586,13 @@ class VMCompilationEngine(CompilationEngine):
                 class_name = self.class_name
                 subroutine_name = identifier
                 # '('
-                assert self._at_symbol("(")
-                self._advance()
+                self._check_symbol_and_advance("(")
                 # expressionList
                 nArgs = self.compileExpressionList()
                 # ')'
-                assert self._at_symbol(")")
-                self._advance()
+                self._check_symbol_and_advance(")")
 
-                # call subroutine -- (TODO:) always method?
+                # call subroutine (method with implicit this)
                 name = f"{class_name}.{subroutine_name}"
                 self.writer.writeCall(name=name, nArgs=nArgs + 1)
             elif self._at_symbol("."):  # (className | varName)
@@ -648,19 +603,15 @@ class VMCompilationEngine(CompilationEngine):
                     # no var found: do className
                     class_name = identifier
                     # '.'
-                    assert self._at_symbol(".")
-                    self._advance()
+                    self._check_symbol_and_advance(".")
                     # subroutineName
-                    subroutine_name = self.jt.tkn
-                    self._advance()
+                    subroutine_name = self._check_identifier_and_advance()
                     # '('
-                    assert self._at_symbol("(")
-                    self._advance()
+                    self._check_symbol_and_advance("(")
                     # expressionList
                     nArgs = self.compileExpressionList()
                     # ')'
-                    assert self._at_symbol(")")
-                    self._advance()
+                    self._check_symbol_and_advance(")")
 
                     # call subroutine
                     self.writer.writeCall(
@@ -668,42 +619,36 @@ class VMCompilationEngine(CompilationEngine):
                     )
                     return
                 # Push object for method call
-                index = self.st.indexOf(name=identifier)
-                self.writer.writePush(segment=Segment.THIS, index=index)
+                self.writer.writePush(
+                    segment=Segment.THIS, index=self.st.indexOf(name=identifier)
+                )
                 # Advance .
                 self._check_symbol_and_advance(".")
                 # subroutineName
-                subroutine_name = self.jt.tkn
-                self._advance()
+                subroutine_name = self._check_identifier_and_advance()
                 # '('
-                assert self._at_symbol("(")
-                self._advance()
+                self._check_symbol_and_advance("(")
                 # expressionList
                 nArgs = self.compileExpressionList()
                 # ')'
-                assert self._at_symbol(")")
-                self._advance()
+                self._check_symbol_and_advance(")")
 
                 # call subroutine
                 self.writer.writeCall(name=f"{type}.{subroutine_name}", nArgs=nArgs + 1)
             else:  # varName
                 name = identifier
-                kind = self.st.kindOf(name=name)
-                segment = h.kind2segment(kind=kind)
+                segment = h.kind2segment(kind=self.st.kindOf(name=name))
                 index = self.st.indexOf(name=name)
                 self.writer.writePush(segment=segment, index=index)
 
         elif token_type == TokenType.SYMBOL and self.jt.symbol == "(":
             # '(' expression ')'
-            assert self._at_symbol("(")
-            self._advance()
+            self._check_symbol_and_advance("(")
             self.compileExpression()
-            assert self._at_symbol(")")
-            self._advance()
-        elif token_type == TokenType.SYMBOL and self.jt.symbol in ("-", "~"):
+            self._check_symbol_and_advance(")")
+        elif token_type == TokenType.SYMBOL and self.jt.symbol in h.unops:
             # unaryOp
-            op = self.jt.tkn
-            self._advance()
+            op = self._check_symbols_and_advance(symbols=h.unops)
             # term
             self.compileTerm()
             # apply postfix unop
@@ -726,30 +671,3 @@ class VMCompilationEngine(CompilationEngine):
                 self.compileExpression()
                 count += 1
         return count
-
-
-def analyze_single_file(file_path):
-    ce = VMCompilationEngine(file_path=file_path)
-    try:
-        ce.compileClass()
-    except Exception as e:
-        # print("\n".join(ce.output))
-        raise (e)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-
-    # Required positional argument
-    parser.add_argument("path", help="path to jack file")
-
-    args = parser.parse_args()
-
-    path = args.path
-
-    if os.path.isdir(path):
-        for file in (f for f in os.listdir(path) if f.endswith(".jack")):
-            print(os.path.join(path, file))
-            analyze_single_file(file_path=os.path.join(path, file))
-    else:
-        analyze_single_file(file_path=path)

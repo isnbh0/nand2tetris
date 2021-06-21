@@ -4,8 +4,6 @@ import sys
 if "compiler" in sys.path[0]:
     sys.path = [os.getcwd()] + sys.path
 
-import re
-
 from compiler.utils.constants import Command, Segment, Keyword
 
 
@@ -53,7 +51,7 @@ class VMWriter:
         self._w(f"function {name} {nLocals}")
 
     def writeReturn(self):
-        self._w(f"return")
+        self._w("return")
 
     def compile_constant(self, keyword: Keyword):
         if keyword == Keyword.NULL:
