@@ -9,26 +9,77 @@
  * consists of 32,768 words, each holding a 16-bit binary number.
  */ 
 class Memory {
+    static Array ram;
+    static Array heap;
+    static int freeList;
 
     /** Initializes the class. */
     function void init() {
+        let ram = 0;
+        let heap = 2048;  // heapBase
+        let freeList = 2048;
+        let heap[0] = 0;  // 2048 <- next
+        let heap[1] = 14334;  // 2049 <- size
+        return;
     }
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
+        return ram[address];
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
+        let ram[address] = value;
+        return;
     }
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
+        var Array curr, smallestCurr;
+        var int currSize, smallestSoFar, address;
+        var bool break;
+
+        let smallestCurr = -1;
+        let smallestSoFar = 14335;
+        let curr = freeList;
+        while (~(curr = 0)) {  // Traverse linked list
+            let currSize = curr[1];
+            if ((currSize > (size + 1)) & (currSize < smallestSoFar)) {
+                let smallestCurr = curr;
+                let smallestSoFar = currSize;
+            }
+            let curr = curr[0];  // Advance
+        }
+
+        // Get starting point of block
+        let address = smallestCurr + smallestCurr[1] - size;
+        do Memory.poke(address, 0);
+        do Memory.poke(address + 1, size);
+
+        // Update remaining size in free node
+        let smallestCurr[1] = smallestCurr[1] - size - 2;
+
+        // If free memory couldn't be found
+        if (smallestCurr = -1) {
+            do Output.printInt(127);
+        }
+        // Return address to actual start of data
+        return address + 2;
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array o) {
+        var Array curr, smallestCurr;
+        var int currSize, smallestSoFar, address;
+
+        let curr = freeList;
+        while (~(curr[0] = 0)) {  // Traverse linked list
+            let curr = curr[0];  // Advance
+        }
+        let curr[0] = o;
+        return;
     }    
 }
