@@ -72,14 +72,32 @@ class Memory {
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array o) {
-        var Array curr, smallestCurr;
-        var int currSize, smallestSoFar, address;
+        var int segment;
+        var Array prev, next;
 
-        let curr = freeList;
-        while (~(curr[0] = 0)) {  // Traverse linked list
-            let curr = curr[0];  // Advance
+        let segment = o - 2;
+        let prev = freeList;
+        let next = prev[0];
+
+        // Insert segment in address value order
+        while ((~(next = 0)) & (next < segment)) {
+            let prev = next;
+            let next = next[0];
         }
-        let curr[0] = o;
+        let prev[0] = segment;
+        let segment[0] = next;
+
+        /* Attempt defrag */
+        // Try combine segment with next if next is not null
+        if ((~(next = 0)) & (segment + segment[1] + 2 = next)) {
+            let segment[1] = segment[1] + next[1] + 2;
+            let segment[0] = next[0];
+        }
+        // Try combine prev with segment
+        if (prev + prev[1] + 2 = segment) {
+            let prev[1] = prev[1] + segment[1] + 2;
+            let prev[0] = segment[0];
+        }
         return;
     }    
 }
