@@ -68,7 +68,7 @@ class String {
      *  until a non-digit character is detected. */
     method int intValue() {
         var int v, i, d;
-        var bool stop, neg;
+        var boolean stop, neg;
 
         let v = 0;
         if (charAt(0) = 45) {  // "-"
@@ -117,7 +117,7 @@ class String {
     method void setInt(int val) {
         var String source;
         var int i;
-        var bool neg;
+        var boolean neg;
 
         let length = 0;
 

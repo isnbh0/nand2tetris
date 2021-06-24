@@ -39,7 +39,7 @@ class Memory {
     function int alloc(int size) {
         var Array curr, smallestCurr;
         var int currSize, smallestSoFar, address;
-        var bool break;
+        var boolean break;
 
         let smallestCurr = -1;
         let smallestSoFar = 14335;
