@@ -11,54 +11,163 @@
  * string-oriented operations.
  */
 class String {
+    field Array str;
+    field int length;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        if (maxLength < 1) {
+            let str = -1;
+        }
+        else {
+            let str = Array.new(maxLength);
+        }
+        let length = 0;
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        if (~(str = -1)) {
+            do str.dispose();
+        }
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return length;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        return str[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        let str[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        let str[length] = c;
+        let length = length + 1;
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        let length = length - 1;
+        return;
     }
 
     /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
     method int intValue() {
+        var int v, i, d;
+        var bool stop, neg;
+
+        let v = 0;
+        if (charAt(0) = 45) {  // "-"
+            let neg = true;
+            let i = 1;
+        }
+        else {
+            let neg = false;
+            let i = 0;
+        }
+        let stop = false;
+        while ((i < length()) & (~stop)) {
+            let d = charAt(i) - 48;  // "0" = 48, ... "9" = 57
+            if ((d > -1) & (d < 10)) {
+                let v = v * 10 + d;
+                let i = i + 1;
+            }
+            else {
+                let stop = true;
+            }
+        }
+        if (neg) {
+            return -v;
+        }
+        else {
+            return v;
+        }
+    }
+
+    /* Convert a string to a non-negative number */
+    function int string2Int(String s) {
+        var int v, i, d;
+
+        let v = 0;
+        let i = 0;
+        while (i < s.length()) {
+            let d = s.charAt(i) - 48;  // "0" = 48, ... "9" = 57
+            let v = v * 10 + d;
+
+            let i = i + 1;
+        }
+        return v;
     }
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+        var String source;
+        var int i;
+        var bool neg;
+
+        let length = 0;
+
+        if (val < 0) {
+            do appendChar(45);  // "-"; also increments length
+        }
+
+        let source = String.int2String(Math.abs(val));
+        let i = 0;
+        while (i < source.length()) {
+            do appendChar(source.charAt(i));
+            let i = i + 1;
+        }
+        do source.dispose();
+        return;
+    }
+
+    /* Convert a non-negative number to a string */
+    function String int2String(int val) {
+        var int lastDigit;
+        var int c;
+        var String s;
+
+        let lastDigit = val - (val / 10 * 10);  // val % 10
+        let c = lastDigit;
+
+        if (val < 10) {
+            let s = String.new(5);  // max 32767
+            do s.appendChar(c + 48);  // "0" = 48, ... "9" = 57
+            return s;
+        }
+        else {
+            let s = String.int2String(val / 10);
+            do s.appendChar(c + 48);  // "0" = 48, ... "9" = 57
+            return s;
+        }
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
