@@ -191,6 +191,13 @@ class Output {
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
+        do Output.printCharNoAdvance(c);
+        do Output.advanceCursor();
+        return;
+    }
+
+    /** Print char without advancing. */
+    function void printCharNoAdvance(char c) {
         var Array map;
         var int x0, y0;
         var int bitrow, bit;
@@ -219,7 +226,11 @@ class Output {
             }
             let i = i + 1;
         }
+        return;
+    }
 
+    /** Advance cursor. */
+    function void advanceCursor() {
         // Advance cursor
         let col = col + 1;
         if (col > 63) {
@@ -279,6 +290,8 @@ class Output {
                 let row = 22;
             }
         }
+
+        do Output.printCharNoAdvance(32);  // " "
         return;
     }
 }
