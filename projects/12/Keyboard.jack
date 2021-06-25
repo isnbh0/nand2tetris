@@ -7,9 +7,12 @@
  * A library for handling user input from the keyboard.
  */
 class Keyboard {
+    static boolean cursorMode;
 
     /** Initializes the keyboard. */
     function void init() {
+        let cursorMode = true;
+        return;
     } 
 
     /**
@@ -33,6 +36,7 @@ class Keyboard {
      * F1 - F12 = 141 - 152
      */
     function char keyPressed() {
+        return Memory.peek(24576);
     }
 
     /**								
@@ -41,6 +45,42 @@ class Keyboard {
      * of the pressed key.
      */
     function char readChar() {
+        var int c;
+
+        let c = Keyboard.readCharNoEcho();
+        do Keyboard.echo(c);
+        return c;
+    }
+
+    /** Char reading loop separated from echo logic*/
+    function char readCharNoEcho() {
+        var int key, c;
+
+        if (cursorMode) {
+            do Output.printChar(0);  // Show cursor (need backspace later)
+        }
+
+        let c = 0;
+        while (c = 0) {
+            let c = Keyboard.keyPressed();
+            let key = c;
+        }
+        while (key = c) {
+            let key = Keyboard.keyPressed();
+        }
+
+        return c;
+    }
+
+    /** Function to echo printable chars */
+    function void echo(char c) {
+        if ((c > 31) & (c < 127)) {  // only print printable characters
+            if (cursorMode) {
+                do Output.backSpace();  // used with cursor
+            }
+            do Output.printChar(c);
+        }
+        return;
     }
 
     /**								
@@ -49,6 +89,7 @@ class Keyboard {
      * and returns its value. Also handles user backspaces.
      */
     function String readLine(String message) {
+        return Keyboard.readValidate(message, false);
     }   
 
     /**								
@@ -58,5 +99,62 @@ class Keyboard {
      * entered text is detected). Also handles user backspaces. 
      */
     function int readInt(String message) {
+        var String str;
+        var int i;
+
+        let str = Keyboard.readValidate(message, true);
+        let i = str.intValue();
+        do str.dispose();
+
+        return i;
     }
+
+    function String readValidate(String message, boolean intMode) {
+        var String str;
+        var int c, i;
+        var boolean done;
+
+        let str = String.new(1472);  // 23 * 64
+
+        do Output.printString(message);  // Prompt
+
+        let done = false;
+        while (~done) {
+            let c = Keyboard.readCharNoEcho();
+            if (c = String.newLine()) {
+                do Output.println();
+                let done = true;
+            }
+            else {
+                if (c = String.backSpace()) {
+                    if (str.length() > 0) {
+                        do str.eraseLastChar();
+                        do Output.backSpace();
+                    }
+                    do Output.backSpace();
+                }
+                else {
+                    if (intMode) {  // readInt
+                        if (
+                            ((c > 47) & (c < 58))  // valid digit
+                            | ((str.length() = 0) & (c = 45))  // negative number
+                        ) {
+                            let str = str.appendChar(c);
+                            do Keyboard.echo(c);
+                        }
+                        else {
+                            if (cursorMode) {
+                                do Output.backSpace();
+                            }
+                        }
+                    }
+                    else {  // readLine
+                        let str = str.appendChar(c);
+                        do Keyboard.echo(c);
+                    }
+                }
+            }
+        }
+        return str;
+    }   
 }
