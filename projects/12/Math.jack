@@ -69,6 +69,7 @@ class Math {
      */
     function int divide(int x, int y) {
         var int x0, y0, q, res;
+        var int qy;
 
         let x0 = x;
         let y0 = y;
@@ -79,7 +80,8 @@ class Math {
             return 0;
         }
         let q = Math.divide(x, y + y);
-        if ((x - (2 * q * y)) < y) {
+        let qy = q * y;
+        if ((x - qy - qy) < y) {
             let res = q + q;
         }
         else {

@@ -44,7 +44,7 @@ class Screen {
 
         let tmp = color;
         let color = false;
-        do Screen.drawRectangle(0, 0, 255, 511);
+        do Screen.drawRectangle(0, 0, 511, 255);
         let color = tmp;
         return;
     }
@@ -58,11 +58,12 @@ class Screen {
 
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
-        var int address, value, r;
+        var int address, value, r, q;
 
-        let address = 16384 + (32 * y) + (x / 16);
+        let q = x / 16;
+        let address = 16384 + (32 * y) + q;
         let value = Memory.peek(address);
-        let r = x - (x / 16 * 16);  // r = x % 16;
+        let r = x - (q * 16);  // r = x % 16;
 
         if (color) {
             let value = (value | twoToThe[r]);
