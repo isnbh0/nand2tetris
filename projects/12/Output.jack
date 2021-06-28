@@ -198,6 +198,7 @@ class Output {
 
     /** Print char without advancing. */
     function void printCharNoAdvance(char c) {
+        // TODO: speed up draw speed
         var Array map;
         var int x0, y0;
         var int bitrow, bit;
