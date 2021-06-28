@@ -85,7 +85,7 @@ class Board {
    }
 
    /** Populate board, pseudo-randomly. */
-   method void populateRNG() {
+   method boolean populateRNG() {
       var Block currBlock;
       var int r, c, d;
       var boolean done;
@@ -99,16 +99,94 @@ class Board {
             let d = d - 1;
          }
          let c = Random.rand();
-         let r = r - (r / 4 * 4);
-         let c = c - (c / 4 * 4);
+         let r = r - (r / nrows * nrows);
+         let c = c - (c / ncols * ncols);
 
          let currBlock = getBlockAt(r, c);
          if (currBlock.isEmpty()) {
             do setBlock(2, r, c);
             let done = true;
          }
+         else {
+            if (isFull()) {
+               return false;
+            }
+         }
       }
-      return;
+      return done;
+   }
+
+   /** Returns true if board is currently full. */
+   method boolean isFull() {
+      var boolean full;
+      var int r, c;
+      var Block currBlock;
+
+      let full = true;
+      let r = 0;
+      while (r < nrows) {
+         let c = 0;
+         while (c < ncols) {
+            let currBlock = getBlockAt(r, c);
+            if (currBlock.isEmpty()) {
+               let full = false;
+               let c = ncols;
+               let r = nrows;
+            }
+            let c = c + 1;
+         }
+         let r = r + 1;
+      }
+      return full;
+   }
+
+   /** Returns true if this board is same as other board. */
+   method boolean sameAs(Board other) {
+      var boolean same;
+      var int r, c;
+      var Block ourBlock, theirBlock;
+
+      let same = true;
+      let r = 0;
+      while (r < nrows) {
+         let c = 0;
+         while (c < ncols) {
+            let ourBlock = getBlockAt(r, c);
+            let theirBlock = other.getBlockAt(r, c);
+            if (~(ourBlock.getValue() = theirBlock.getValue())) {
+               let same = false;
+               let c = ncols;
+               let r = nrows;
+            }
+            let c = c + 1;
+         }
+         let r = r + 1;
+      }
+      return same;
+   }
+
+   /** Returns true if board contains value higher than threshold. */
+   method boolean containsBiggerThan(int threshold) {
+      var int r, c;
+      var boolean contains;
+      var Block block;
+
+      let contains = false;
+      let r = 0;
+      while (r < nrows) {
+         let c = 0;
+         while (c < ncols) {
+            let block = getBlockAt(r, c);
+            if (block.getValue() > threshold) {
+               let contains = true;
+               let c = ncols;
+               let r = nrows;
+            }
+            let c = c + 1;
+         }
+         let r = r + 1;
+      }
+      return contains;
    }
 
    /** Initialize board. */
@@ -167,6 +245,7 @@ class Board {
 
    /** Draw the board on the screen. */
    method void print() {
+      // TODO: separate board printing logic (one-time) from number printing logic (every move)
       var int r, c, p, CHAR_WIDTH;
       var Block currBlock;
       var String wall, leftPillar, centerPillar;
