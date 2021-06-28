@@ -32,6 +32,7 @@ class String {
         if (~(str = -1)) {
             do str.dispose();
         }
+        do Memory.deAlloc(this);
         return;
     }
 
