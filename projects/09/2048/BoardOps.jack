@@ -66,7 +66,6 @@ class BoardOps {
          }
          let c = c + 1;
       }
-      do board.dispose();
       return board_new;
    }
 
@@ -125,7 +124,6 @@ class BoardOps {
          }
          let r = r + 1;
       }
-      do board.dispose();
       return board_new;
    }
 
@@ -182,7 +180,6 @@ class BoardOps {
          }
          let c = c - 1;
       }
-      do board.dispose();
       return board_new;
    }
 
@@ -241,7 +238,6 @@ class BoardOps {
          }
          let r = r - 1;
       }
-      do board.dispose();
       return board_new;
    }
 
