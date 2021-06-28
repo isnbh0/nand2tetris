@@ -79,6 +79,11 @@ class Math {
         if (y > x) {
             return 0;
         }
+        else {
+            if (y > 16383) {
+                return 1;  // prevent overflow!
+            }
+        }
         let q = Math.divide(x, y + y);
         let qy = q * y;
         if ((x - qy - qy) < y) {
