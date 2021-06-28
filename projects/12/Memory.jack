@@ -85,6 +85,14 @@ class Memory {
             let next = next[0];
         }
         let prev[0] = segment;
+
+        if (segment = next) {
+            // if the memory related to the argument has already been freed
+            // this is undefined behavior
+            // do nothing
+            return;
+        }
+
         let segment[0] = next;
 
         /* Attempt defrag */
