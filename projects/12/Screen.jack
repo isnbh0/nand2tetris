@@ -62,9 +62,9 @@ class Screen {
 
         let q = x / 16;
         let address = 16384 + (32 * y) + q;
-        let value = Memory.peek(address);
         let r = x - (q * 16);  // r = x % 16;
 
+        let value = Memory.peek(address);
         if (color) {
             let value = (value | twoToThe[r]);
         }
@@ -128,25 +128,118 @@ class Screen {
         return;
     }
 
+    /** Partially fills the 16-bit word from (x,y) pixel, using the current color. */
+    function void fillPartialWord(int x, int y, bool rightward) {
+        var int address, q, r;
+
+        let q = x / 16;
+        let address = 16384 + (32 * y) + q;
+        let r = x - (q * 16);
+
+        if (rightward) {
+            do Screen._drawPartialWord(address, r, 15);
+        }
+        else {
+            do Screen._drawPartialWord(address, 0, r);
+        }
+        return;
+    }
+
+    /** Draw in contiguous subsection of word from index r1 to r2.
+        Assumes 0 <= x1 < x2 <= 15.
+      */
+    function void drawPartialWord(int x1, int x2, int y) {
+        var int address, q, r1, r2;
+
+        let q = x1 / 16;
+        let address = 16384 + (32 * y) + q;
+        let r1 = x1 - (q * 16);
+        let r2 = r1 + (x2 - x1);
+
+        do Screen._drawPartialWord(address, r1, r2);
+        return;
+    }
+
+    /** Draw in contiguous subsection of word from index r1 to r2.
+      * Internal function when given raw address.
+      */
+    function void _drawPartialWord(int address, int r1, int r2) {
+        var int value, mask;
+        
+        let value = Memory.peek(address);
+        let mask = Screen._getPartialMask(r1, r2);
+
+        if (color) {
+            let value = (value | mask);
+        }
+        else {
+            let value = ~(~value | mask);
+        }
+
+        do Memory.poke(address, value);
+        return;
+    }
+
+    /** Get 16-bit partial mask with 1 bit from pos r1 to r2 inclusive. */
+    function int _getPartialMask(int r1, int r2) {
+        var int r, mask;
+
+        let mask = 0;
+        if ((r1 = 0) & (r2 = 15)) {
+            let mask = -1;
+        }
+        else {
+            let r = r1;
+            while (~(r > r2)) {
+                let mask = mask + twoToThe[r];
+                let r = r + 1;
+            } 
+        }
+        return mask;
+    }
+
     /* Draw horizontal line from (x1, y) to (x2, y). */
     function void drawHorizontalLine(int x1, int x2, int y) {
-        // TODO: optimize further by coloring in words when possible?
-        var int dx, sx, a;
+        var int dx, e_x1, e_x2, sx, x, last;
+        var boolean rightward;
 
         let dx = x2 - x1;
 
-        if (dx < 0) {
-            let sx = -1;
-            let dx = Math.abs(dx);
+        let e_x1 = x1 - (x1 / 16 * 16);
+        let e_x2 = x2 - (x2 / 16 * 16);
+
+        let rightward = ~(dx < 0);
+        if (rightward) {
+            let sx = 1;
+
+            let e_x1 = 16 - e_x1;
+            let e_x2 = e_x2 + 1;
         }
         else {
-            let sx = 1;
+            let sx = -1;
+            let dx = Math.abs(dx);
+
+            let e_x1 = e_x1 + 1;
+            let e_x2 = 16 - e_x2;
         }
 
-        let a = 0;
-        while (~(a > dx)) {
-            do Screen.drawPixel(x1 + (sx*a), y);
-            let a = a + 1;
+        if ((e_x1 + e_x2) > (dx + 1)) {  // line contained within a word
+            if (rightward) {
+                do Screen.drawPartialWord(x1, x2, y);
+            }
+            else {
+                do Screen.drawPartialWord(x2, x1, y);
+            }
+        }
+        else {  // longer line
+            do Screen.fillPartialWord(x1, y, rightward);  // fill left piece
+            let x = x1 + (e_x1*sx);
+            let last = x2 - ((e_x2 - 1) * sx);
+            while (~(x = last)) {  // fill whole words
+                do Screen.fillPartialWord(x, y, rightward);
+                let x = x + (16 * sx);
+            }
+            do Screen.fillPartialWord(x2, y, ~rightward);  // fill right piece
         }
         return;
     }
@@ -197,7 +290,7 @@ class Screen {
         let dy = -r;
         while (~(dy > r)) {
             let halfChord = Math.sqrt(r*r - (dy*dy));
-            do Screen.drawLine(x - halfChord, y + dy, x + halfChord, y + dy);
+            do Screen.drawHorizontalLine(x - halfChord, x + halfChord, y + dy);
             let dy = dy + 1;
         }
         return;
