@@ -654,7 +654,7 @@ class VMCompilationEngine(CompilationEngine):
             # apply postfix unop
             self.writer.writeArithmetic(command=h.unop_map[op])
         else:
-            raise Exception("Token type not found")
+            raise Exception("Token type not found", self.current_token)
 
     def compileExpressionList(self) -> int:
         count = 0
