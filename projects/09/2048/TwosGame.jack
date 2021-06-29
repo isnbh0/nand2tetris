@@ -21,7 +21,7 @@ class TwosGame {
       // Print main screen
       do Output.moveCursor(1, 22);
       do Output.printString(titleString);
-      do Output.moveCursor(3, 7);
+      do Output.moveCursor(3, 10);
       do Output.printString(instructionString);
 
       let nrows = 4;
@@ -89,7 +89,10 @@ class TwosGame {
             // other actions while key is not pressed
          }
 
-         if (key = 81) { let exit = true; }  // q key
+         if (key = 81) {  // q key
+            do Output.printString("You quit successfully.");
+            let exit = true;
+         }
          if (key = 82) {  // r key
             do board.dispose();
             do init();
