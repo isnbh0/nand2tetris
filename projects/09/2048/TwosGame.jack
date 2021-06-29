@@ -107,14 +107,10 @@ class TwosGame {
             let board_new = BoardOps.alter(board, key - 129);
 
             if (board_new.sameAs(board)) {
-               // do Output.printInt(999);
-
                do board_new.dispose();
                let filled = false;
             }
             else {
-               // do Output.printInt(888);
-
                do board_old.dispose();
                let board_old = board;
                let board = board_new;
@@ -190,7 +186,6 @@ class TwosGame {
       while (dir < 5) {
          let board_alt = BoardOps.alter(board, dir);
          if (~(board.sameAs(board_alt))) {
-            // do Output.printInt(dir);
             let loseCondition = false;
             let dir = 5;
          }
