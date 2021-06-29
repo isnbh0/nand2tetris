@@ -585,6 +585,8 @@ class VMCompilationEngine(CompilationEngine):
             elif self._at_symbol("("):  # subroutineName
                 class_name = self.class_name
                 subroutine_name = identifier
+                # push this
+                self.writer.writePush(segment=Segment.POINTER, index=0)
                 # '('
                 self._check_symbol_and_advance("(")
                 # expressionList
@@ -619,8 +621,9 @@ class VMCompilationEngine(CompilationEngine):
                     )
                     return
                 # Push object for method call
+                segment = h.kind2segment(kind=self.st.kindOf(name=identifier))
                 self.writer.writePush(
-                    segment=Segment.THIS, index=self.st.indexOf(name=identifier)
+                    segment=segment, index=self.st.indexOf(name=identifier)
                 )
                 # Advance .
                 self._check_symbol_and_advance(".")
