@@ -8,12 +8,14 @@ class TwosGame {
    field String startString;
    field Board board;
    field boolean loseCondition, winCondition;
+   field Board board_old;
+   field boolean loseCondition_old, winCondition_old;
    field int winThreshold;
    field int nrows, ncols;
 
    constructor TwosGame new() {
       let titleString = "= = = 2 0 4 8 = = =";
-      let instructionString = "Instructions: arrows to move, r to reset, q to quit";
+      let instructionString = "Arrows: move / U: undo / R: reset / Q: quit";
       let startString = "Press spacebar to start...";
       
       // Print main screen
@@ -24,6 +26,9 @@ class TwosGame {
 
       let nrows = 4;
       let ncols = 4;
+      let winThreshold = 128;
+      let winThreshold = winThreshold - 1; // winThreshold or higher wins
+
       do init();
 
       return this;
@@ -32,8 +37,8 @@ class TwosGame {
    method void init() {
       let loseCondition = false;
       let winCondition = false;
-      let winThreshold = 16 - 1;
       let board = Board.new(nrows, ncols);
+      let board_old = Board.new(nrows, ncols);
       return;
    }
 
@@ -41,7 +46,7 @@ class TwosGame {
        Has two phases: start screen and game loop.
        Start screen also helps to seed the PRNG. */
    method void run() {
-      var Board board_new, board_old, board_alt;
+      var Board board_new;
       var char key;
       var boolean started, exit;
       var int initSeed;
@@ -77,9 +82,6 @@ class TwosGame {
       do board.initialize();
 
       // Game loop
-      // TODO: have board only populate when blocks move
-      // TODO: check edge cases (there was a bug with full board)
-      // TODO: add win condition and lose condition... lol
       while (~exit) {
          // Wait for key to be pressed
          while (key = 0) {
@@ -93,28 +95,43 @@ class TwosGame {
             do init();
             do board.initialize();
          }
+         if (key = 85) {  // u key
+            do undo();
+            do board.print();
+         }
          if ((key > 129) & (key < 134)) {  // arrows
+
             let board_new = BoardOps.alter(board, key - 129);
 
-            let board_old = board;
-            let board = board_new;
+            if (board_new.sameAs(board)) {
+               // do Output.printInt(999);
 
-            do board.print();
+               do board_new.dispose();
+               let filled = false;
+            }
+            else {
+               // do Output.printInt(888);
+
+               do board_old.dispose();
+               let board_old = board;
+               let board = board_new;
+               do board.print();
+
+               do Sys.wait(50);
+               let filled = board.populateRNG();
+            }
 
             // check win condition
             do checkWinCondition();
-
-
-            do Sys.wait(50);
-            let filled = board.populateRNG();
-
             if (~filled) {
                do checkLoseCondition();
             }
 
+            do board.print();
+
             // print status according to condition
             if (winCondition) {
-               do Output.moveCursor(13, 24);
+               do Output.moveCursor(13, 23);
                do Output.printString("Y O U   W I N ! !");
             }
             else {
@@ -122,12 +139,8 @@ class TwosGame {
                   do Output.moveCursor(13, 23);
                   do Output.printString("G A M E   O V E R");
                }
-               else {
-                  do board.print();
-               }
             }
 
-            do board_old.dispose();
          }
 
          // Wait for key to be released
@@ -139,7 +152,27 @@ class TwosGame {
       return;
    }
 
+   method void undo() {
+      var Board board_tmp;
+      var boolean loseCondition_tmp, winCondition_tmp;
+
+      let board_tmp = board;
+      let board = board_old;
+      let board_old = board_tmp;
+
+      let loseCondition_tmp = loseCondition;
+      let loseCondition = loseCondition_old;
+      let loseCondition_old = loseCondition_tmp;
+ 
+      let winCondition_tmp = winCondition;
+      let winCondition = winCondition_old;
+      let winCondition_old = winCondition_tmp;
+
+      return;
+   }
+
    method void checkWinCondition() {
+      let winCondition_old = winCondition;
       let winCondition = board.containsBiggerThan(winThreshold);
       return;
    }
@@ -148,14 +181,15 @@ class TwosGame {
       var int dir;
       var Board board_alt;
 
+      let loseCondition_old = loseCondition;
       let loseCondition = true;
       let dir = 1;
-      while (dir < 3) {
+      while (dir < 5) {
          let board_alt = BoardOps.alter(board, dir);
          if (~(board.sameAs(board_alt))) {
-            do Output.printInt(dir);
+            // do Output.printInt(dir);
             let loseCondition = false;
-            let dir = 3;
+            let dir = 5;
          }
          do board_alt.dispose();
          let dir = dir + 1;
