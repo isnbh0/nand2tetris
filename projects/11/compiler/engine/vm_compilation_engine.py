@@ -556,7 +556,7 @@ class VMCompilationEngine(CompilationEngine):
             self._advance()
         elif token_type == TokenType.KEYWORD:
             keyword = self._check_keyword_and_advance(
-                keywords=(Keyword.TRUE, Keyword.FALSE, Keyword.NULL, Keyword.THIS,)
+                keywords=(Keyword.TRUE, Keyword.FALSE, Keyword.NULL, Keyword.THIS)
             )
             self.writer.compile_constant(keyword)
         elif token_type == TokenType.IDENTIFIER:

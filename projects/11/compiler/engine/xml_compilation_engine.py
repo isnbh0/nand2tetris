@@ -422,7 +422,7 @@ class XmlCompilationEngine(CompilationEngine):
             try:
                 # try to use varName
                 self._append_identifier_symbol(
-                    name=identifier, verb=Verb.USE, advance=False,
+                    name=identifier, verb=Verb.USE, advance=False
                 )
             except ValueError:
                 # no var found: do className
@@ -494,7 +494,7 @@ class XmlCompilationEngine(CompilationEngine):
             identifier = self.last_token
             if self._at_symbol("["):  # varName
                 self._append_identifier_symbol(
-                    name=identifier, verb=Verb.USE, advance=False,
+                    name=identifier, verb=Verb.USE, advance=False
                 )
                 # '['
                 self._append_and_advance_symbol("[")
@@ -519,7 +519,7 @@ class XmlCompilationEngine(CompilationEngine):
                 try:
                     # try to use varName
                     self._append_identifier_symbol(
-                        name=identifier, verb=Verb.USE, advance=False,
+                        name=identifier, verb=Verb.USE, advance=False
                     )
                 except ValueError:
                     # no var found: do className
@@ -543,7 +543,7 @@ class XmlCompilationEngine(CompilationEngine):
                 self._append_and_advance_symbol(")")
             else:  # varName
                 self._append_identifier_symbol(
-                    name=identifier, verb=Verb.USE, advance=False,
+                    name=identifier, verb=Verb.USE, advance=False
                 )
         elif token_type == TokenType.SYMBOL and self.jt.symbol == "(":
             # '(' expression ')'
