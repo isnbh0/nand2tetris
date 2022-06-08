@@ -11,9 +11,9 @@ class Sys {
     /** Performs all the initializations required by the OS. */
     function void init() {
         do Memory.init();
-        // do Array.init();
+        // do Array.init();  // doesn't need init!
         do Math.init();
-        // do String.init();
+        // do String.init();  // doesn't need init!
         do Screen.init();
         do Output.init();
         do Keyboard.init();
