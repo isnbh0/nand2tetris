@@ -1,7 +1,15 @@
 # nand2tetris
 
-My solutions to the [nand2tetris](https://www.nand2tetris.org/) course on building a computer system, starting only with NAND logic gates and ending with a [working game of 2048](https://youtu.be/xZUWkpwCtUM).
+My solutions to the [nand2tetris](https://www.nand2tetris.org/) course on building a computer system, starting only with NAND logic gates and ending with a [working game of 2048](https://youtu.be/xZUWkpwCtUM):
 
+<div align="center">
+    <a href="https://youtu.be/xZUWkpwCtUM">
+        <img 
+            src="https://img.youtube.com/vi/xZUWkpwCtUM/hqdefault.jpg" 
+            alt="Watch the video" 
+        >
+    </a>
+</div>
 
 ## Projects
 | Project | Title | Languages | Notable Work |
