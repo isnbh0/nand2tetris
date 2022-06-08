@@ -2,6 +2,7 @@
 
 My solutions to the [nand2tetris](https://www.nand2tetris.org/) course on building a computer system, starting only with NAND logic gates and ending with a [working game of 2048](https://youtu.be/xZUWkpwCtUM).
 
+
 ## Projects
 | Project | Title | Languages | Notable Work |
 |---|---|---|---|
@@ -22,3 +23,15 @@ My solutions to the [nand2tetris](https://www.nand2tetris.org/) course on buildi
 | Hack assembly | .asm      | A human-readable assembly language for the Hack machine language.                                                                                                 |
 | VM            | .vm       | The language associated with the stack-based virtual machine as specified in The Elements of Computing Systems chapters 7 and 8.                                  |
 | Jack          | .jack     | A high-level, object-based programming language inspired by languages like Java or C#.                                                                            |
+
+## Note
+The code (especially Python) may not be 100% polished and will trigger linters, with issues such as the following.
+- inconsistency with case types when naming functions and attributes (e.g. [`compileClass`](https://github.com/isnbh0/nand2tetris/blob/4700bdd4999ee23faf0ce44e70277f7cf8ffdd96/projects/11/compiler/engine/vm_compilation_engine.py#L104) vs [`current_token`](https://github.com/isnbh0/nand2tetris/blob/4700bdd4999ee23faf0ce44e70277f7cf8ffdd96/projects/11/compiler/engine/vm_compilation_engine.py#L39))
+- unused imports and names (e.g. [here](https://github.com/isnbh0/nand2tetris/blob/4700bdd4999ee23faf0ce44e70277f7cf8ffdd96/projects/06/assemble.py#L3) and [here](https://github.com/isnbh0/nand2tetris/blob/4700bdd4999ee23faf0ce44e70277f7cf8ffdd96/projects/06/assemble.py#L180))
+- f-strings with no placeholders (e.g. [in here](https://github.com/isnbh0/nand2tetris/blob/4700bdd4999ee23faf0ce44e70277f7cf8ffdd96/projects/08/helpers.py))
+- lines that have been commented out that will never be used (e.g. [here](https://github.com/isnbh0/nand2tetris/blob/4700bdd4999ee23faf0ce44e70277f7cf8ffdd96/projects/08/vmtranslator.py#L154))
+
+
+---
+
+Based on the [Nand2tetris Software Suite](https://www.nand2tetris.org/software).
